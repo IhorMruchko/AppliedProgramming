@@ -1,7 +1,9 @@
+import sys
 from datetime import datetime
 from os import getcwd
 from random import randint
 from enum import Enum
+
 
 # region List task
 
@@ -127,6 +129,7 @@ def triangle_solution(a: float, b: float, c: float) -> TriangleType:
     """
     return define_triangle_type(a, b, c) if is_triangle(a, b, c) else TriangleType.NotATriangle
 
+
 # endregion
 
 # region Sentence task
@@ -151,9 +154,83 @@ def connect_sentence(sentence: str, connector='\n') -> str:
     :return: reconnected sentence.
     """
     return connector.join(split_sentence(sentence))
+
+
 # endregion
 
 # region Matrix task
+
+
+def to_string(matrix: list[list[int]]) -> str:
+    """
+    Represents matrix in the more readable form.
+
+    :param matrix: matrix to represent.
+    :return: string representation of the matrix.
+    """
+    return '\n'.join([''.join(['{:4}'.format(item) for item in row]) for row in matrix])
+
+
+def possible_rectangle_sizes(size: int) -> list[(int, int, int, int)]:
+    """
+    Generates possible rectangle sizes.
+
+    :param size: size of the parent matrix.
+    :return: list of the tuples (start of the row, end of the row, start of the column, end of the column)
+    """
+    return [(row_start, row_end, column_start, column_end)
+            for row_start in range(size)
+            for row_end in range(row_start, size)
+            for column_start in range(size)
+            for column_end in range(column_start, size)
+            if row_end - row_start != column_end - column_start]
+
+
+def generate_sums(matrix: list[list[int]]) -> list[list[int]]:
+    """
+    Generates helping matrix, where sum of the element in the matrix from (0, 0) to (i-1, j-1) are stored.
+
+    :param matrix: matrix to preprocess.
+    :return: matrix, with dim = dim(matrix) + 1 and contains proper sum.
+    """
+    sum_size = len(matrix) + 1
+    sum_sub_matrix = [[0 for _ in range(sum_size)] for _ in range(sum_size)]
+
+    for i in range(1, sum_size):
+        for j in range(1, sum_size):
+            sum_sub_matrix[i][j] = sum_sub_matrix[i - 1][j] + \
+                                   sum_sub_matrix[i][j - 1] - \
+                                   sum_sub_matrix[i - 1][j - 1] + \
+                                   matrix[i - 1][j - 1]
+
+    return sum_sub_matrix
+
+
+def find_max_sum_subrectangle(matrix: list[list[int]]) -> list[list[int]]:
+    """
+    Finds subrectangle of the matrix with the largest sum.
+
+    :param matrix: matrix to find in.
+    :return: subrectangle with the largest sum.
+    """
+    if not (matrix and len(matrix)):
+        return []
+
+    size, sum_size, result_sum, rectangle_size = len(matrix), len(matrix) + 1, -sys.maxsize, (-1, -1, -1, -1)
+    sum_of_sub_rectangles = generate_sums(matrix)
+
+    for possible_size in possible_rectangle_sizes(size):
+        subrectangle_sum = sum_of_sub_rectangles[possible_size[1] + 1][possible_size[3] + 1] - \
+                           sum_of_sub_rectangles[possible_size[1] + 1][possible_size[2]] - \
+                           sum_of_sub_rectangles[possible_size[0]][possible_size[3] + 1] + \
+                           sum_of_sub_rectangles[possible_size[0]][possible_size[2]]
+
+        if subrectangle_sum > result_sum:
+            result_sum, rectangle_size = subrectangle_sum, possible_size
+
+    return [[matrix[i][j]
+             for j in range(rectangle_size[2], rectangle_size[3] + 1)
+             for i in range(rectangle_size[0], rectangle_size[1] + 1)]]
 # endregion
 
 
@@ -206,4 +283,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    N = 3
+    m = [[randint(-10, 10) for _ in range(N)] for _ in range(N)]
+    print(to_string(m))
+    print()
+    print(to_string(find_max_sum_subrectangle(m)))
