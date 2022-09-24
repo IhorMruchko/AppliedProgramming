@@ -11,6 +11,9 @@ class Case:
     """
     Represents the smallest pies of the test.
     """
+    SUCCESS = "✔"
+    FAIL = "❌ (Expected {0}, but was {1})"
+    EXCEPTION = "Unhandled exception {0}."
 
     def __init__(self, target):
         """
@@ -31,10 +34,10 @@ class Case:
         data_log = ""
         try:
             result = self.target(input_data)
-            data_log += "Assert done." if result == self.expected else f"Expected {self.expected} but was {result}."
+            data_log += self.SUCCESS if result == self.expected else self.FAIL.format(self.expected, result)
         except Exception as e:
-            data_log += f"Exception  [{e}] of type {type(e)} vas thrown properly." \
-                if type(self.expected) is type(e) and self.expected.args == e.args else f"Unhandled exception [{e}]."
+            data_log += self.SUCCESS if type(self.expected) == type(e) and self.expected.args == e.args \
+                else self.EXCEPTION.format(e)
         return data_log
 
 
@@ -154,7 +157,7 @@ class Tester:
         """
         file_to_save = f"{getcwd()}\\testing" + \
                        f"_{datetime.now().strftime('%Y_%d_%m_%H_%M_%S')}.txt"
-        with open(file_to_save, 'w+') as file:
+        with open(file_to_save, 'w+', encoding="utf-8") as file:
             file.write(data_log)
 
     def parse_test(self) -> None:
@@ -163,8 +166,8 @@ class Tester:
 
         :exception EOFError: Cannot find closing test delimiter.
         """
-        with open(self.__filepath, 'r') as file:
-            lines = file.readlines()
+        with open(self.__filepath, 'r', encoding="utf-8") as file:
+            lines = [line.strip() for line in file.readlines() if len(line.strip()) > 0]
 
         if lines[-1] != self.TEST_DELIMITER:
             raise EOFError(f"Cannot find closing {self.TEST_DELIMITER}")
@@ -320,7 +323,7 @@ def is_triangle(a: float, b: float, c: float) -> bool:
     return is_segments(a, b, c) and sort[0] <= sort[1] + sort[2]
 
 
-def define_triangle_type(a: float, b: float, c: float) -> TriangleType:
+def define_triangle_type(a: float, b: float, c: float) -> str:
     """
     Defines type of the triangle based on the sides' equality.
 
@@ -329,9 +332,9 @@ def define_triangle_type(a: float, b: float, c: float) -> TriangleType:
     :param c: third triangle side.
     :return: type of the triangle.
     """
-    return TriangleType.Equilateral if a == b == c \
-        else TriangleType.Isosceles if a == b or a == c or c == b \
-        else TriangleType.Scalene
+    return TriangleType.Equilateral.value if a == b == c \
+        else TriangleType.Isosceles.value if a == b or a == c or c == b \
+        else TriangleType.Scalene.value
 
 
 def triangle_solution(a: float, b: float, c: float) -> TriangleType:
@@ -343,7 +346,7 @@ def triangle_solution(a: float, b: float, c: float) -> TriangleType:
     :param c: third triangle side.
     :return: type of the triangle.
     """
-    return define_triangle_type(a, b, c) if is_triangle(a, b, c) else TriangleType.NotATriangle
+    return define_triangle_type(a, b, c) if is_triangle(a, b, c) else TriangleType.NotATriangle.value
 
 
 # endregion
@@ -429,7 +432,7 @@ def find_max_sum_subrectangle(matrix: list[list[int]]) -> list[list[int]]:
     :param matrix: matrix to find in.
     :return: subrectangle with the largest sum.
     """
-    if not (matrix and len(matrix)):
+    if len(matrix) == 0 or len([item for item in matrix if len(item) != len(matrix)]) != 0:
         return []
 
     size, sum_size, result_sum, rectangle_size = len(matrix), len(matrix) + 1, -sys.maxsize, (-1, -1, -1, -1)
@@ -445,8 +448,8 @@ def find_max_sum_subrectangle(matrix: list[list[int]]) -> list[list[int]]:
             result_sum, rectangle_size = subrectangle_sum, possible_size
 
     return [[matrix[i][j]
-             for j in range(rectangle_size[2], rectangle_size[3] + 1)
-             for i in range(rectangle_size[0], rectangle_size[1] + 1)]]
+            for j in range(rectangle_size[2], rectangle_size[3] + 1)]
+            for i in range(rectangle_size[0], rectangle_size[1] + 1)]
 
 
 # endregion
@@ -459,10 +462,26 @@ def main():
         .add_case(lambda case: filter_and_operate_list(case, operator=len, predicate=is_positive)) \
         .add_case(lambda case: filter_and_operate_list(case, operator=len, predicate=is_negative)) \
         .add_case(lambda case: filter_and_operate_list(case, operator=average, predicate=is_negative)) \
+        .add_test("List filtering testing with exception") \
+        .add_case(lambda case: filter_and_operate_list(case, operator=len, predicate=is_positive)) \
+        .add_case(lambda case: filter_and_operate_list(case, operator=len, predicate=is_negative)) \
+        .add_case(lambda case: filter_and_operate_list(case, operator=average, predicate=is_negative)) \
+        .add_test("Rectangle") \
+        .add_case(lambda case: triangle_solution(case[0], case[1], case[2])) \
         .add_test() \
-        .add_case(lambda case: filter_and_operate_list(case, operator=sum, predicate=is_odd)) \
+        .add_case(lambda case: triangle_solution(case[0], case[1], case[2])) \
         .add_test() \
-        .add_case(lambda case: find_max_sum_subrectangle(case))
+        .add_case(lambda case: triangle_solution(case[0], case[1], case[2])) \
+        .add_test() \
+        .add_case(lambda case: triangle_solution(case[0], case[1], case[2])) \
+        .add_test("Sentence rebuilding test") \
+        .add_case(lambda case: connect_sentence(case)) \
+        .add_test() \
+        .add_case(lambda case: find_max_sum_subrectangle(case)) \
+        .add_test() \
+        .add_case(lambda case: find_max_sum_subrectangle(case)) \
+        .add_test() \
+        .add_case(lambda case: find_max_sum_subrectangle(case)) \
 
     tester.run()
 

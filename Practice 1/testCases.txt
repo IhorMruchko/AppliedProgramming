@@ -6,7 +6,32 @@ Case: -13.75
 ===
 Input: [1, 2, 3, 4, 5]
 Case: ValueError("Last value of the list must be zero, instead 5")
+Case: ValueError("Last value of the list must be zero, instead 5")
+Case: ValueError("Last value of the list must be zero, instead 5")
 ===
-Input: [[1, 1], [2, 2]]
-Case: [[2, 2]]
+Input: (2, 2, 1)
+Case: "Рівнобедрений"
 ===
+Input: (5, 6, 21)
+Case: "Не трикутник"
+===
+Input: (4, 4, 4)
+Case: "Рівносторонній"
+===
+Input: (1000, 1001, 2)
+Case: "Довільний"
+===
+Input: "Hello there! It's a lovely day today, isn't it?"
+Case: "Hello\nthere\nIt's\na\nlovely\nday\ntoday\nisn't\nit"
+===
+Input: [[1, 2], [1, 2]]
+Case: [[2], [2]]
+===
+Input: [[4, 5, 1],[2, -1, 7], [0, -12, 1]]
+Case: [[4, 5, 1], [2, -1, 7]]
+===
+Input: "Some plain text"
+Case: []
+===
+
+
