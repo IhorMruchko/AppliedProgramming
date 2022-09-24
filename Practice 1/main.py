@@ -1,9 +1,215 @@
 import sys
 from datetime import datetime
-from os import getcwd
-from random import randint
 from enum import Enum
+from os import getcwd, path
 
+
+# region Testing
+
+
+class Case:
+    """
+    Represents the smallest pies of the test.
+    """
+
+    def __init__(self, target):
+        """
+        Initiates case.
+
+        :param target: function to test.
+        """
+        self.expected = None
+        self.target = target
+
+    def run(self, input_data) -> str:
+        """
+        Executes target of the case with input_data.
+
+        :param input_data: data to test target with.
+        :return: data log of the test passing.
+        """
+        data_log = ""
+        try:
+            result = self.target(input_data)
+            data_log += "Assert done." if result == self.expected else f"Expected {self.expected} but was {result}."
+        except Exception as e:
+            data_log += f"Exception  [{e}] of type {type(e)} vas thrown properly." \
+                if type(self.expected) is type(e) and self.expected.args == e.args else f"Unhandled exception [{e}]."
+        return data_log
+
+
+class Test:
+    """
+    Represents pies of the test with common input for different cases.
+    """
+
+    def __init__(self, title: str):
+        """
+        Initiates Test with the title.
+        :param title:
+        """
+        self.title = title
+        self.input_data = None
+        self.cases: list[Case] = []
+
+    def add(self, case: Case):
+        """
+        Ads case to the test cases.
+
+        :param case: case to add.
+        :return: this test.
+        """
+        self.cases.append(case)
+        return self
+
+    def run(self):
+        """
+        Executes each case with input_data.
+
+        :return: data log of the execution.
+        """
+        data_log = self.title
+        for case in self.cases:
+            data_log += '\n\t' + case.run(self.input_data)
+        return data_log
+
+
+class Tester:
+    """
+    Represents tests container that perform testing.
+
+    Requirements:
+    All === signs must have closing one signs.
+    Amount of the tests (data between ===) must be equal to predefined tests amount. (amount of used add_test()).
+    Amount of the test's cases must be equal to predefined test's cases amount (amount of used add_case()).
+
+    Acceptable file format:
+    ===
+    Input: [value in python declaration way].
+    Case: expected result for case 1.
+    Case: expected result for case 2.
+    ...
+    ===
+    Input:
+    Case:
+    ...
+    ===
+    """
+    TEST_DELIMITER = "==="
+    INPUT_TAG = "Input:"
+    CASE_TAG = "Case:"
+
+    def __init__(self, filepath: str):
+        """
+        Initiate tests container with filepath.
+
+        :param filepath: path to the input data file.
+        :exception FileExistsError: File is not exists.
+        """
+        if not path.exists(filepath):
+            raise FileExistsError(f"File {filepath} does not exists")
+        self.__filepath = filepath
+        self.__tests: list[Test] = []
+
+    def add_test(self, title: str = None):
+        """
+        Adds test to the container.
+
+        :param title: Title of the test. If None - generates title as Test [number of the test].
+        :return: Updated test container.
+        """
+        self.__tests.append(Test(f"Test {len(self.__tests) + 1}" if title is None else title))
+        return self
+
+    def add_case(self, target):
+        """
+        Add to the last test in the container new case.
+
+        :param target: Function to test.
+        :return: Updated test container.
+        :exception IndexError: Adding case to empty test container.
+        """
+        if not self.__tests:
+            raise IndexError("Cannot add case, because there is no any test!")
+        self.__tests[-1].add(Case(target))
+        return self
+
+    def run(self):
+        """
+        Execute all tests and saves the data log.
+        """
+        self.parse_test()
+        data_log = "=" * 50 + '\n'
+        for test in self.__tests:
+            data_log += test.run() + '\n' + "=" * 50 + '\n'
+
+        self.save(data_log)
+
+    @staticmethod
+    def save(data_log) -> None:
+        """
+        Saves data log to the file.
+
+        :param data_log: data log to save.
+        """
+        file_to_save = f"{getcwd()}\\testing" + \
+                       f"_{datetime.now().strftime('%Y_%d_%m_%H_%M_%S')}.txt"
+        with open(file_to_save, 'w+') as file:
+            file.write(data_log)
+
+    def parse_test(self) -> None:
+        """
+        Reads all test from the file and validate formatting.
+
+        :exception EOFError: Cannot find closing test delimiter.
+        """
+        with open(self.__filepath, 'r') as file:
+            lines = file.readlines()
+
+        if lines[-1] != self.TEST_DELIMITER:
+            raise EOFError(f"Cannot find closing {self.TEST_DELIMITER}")
+
+        tests = self.parse_tests(lines)
+        self.format_tests(tests)
+
+    def parse_tests(self, lines: list[str]) -> list[list[str]]:
+        """
+        Get test information about input and cases.
+
+        :param lines: Text read from the file.
+        :return: list of the data for each test.
+        """
+        delimiter_indexes = [i for i in range(len(lines)) if lines[i].strip() == self.TEST_DELIMITER]
+        if len(delimiter_indexes) - 1 != len(self.__tests):
+            raise ReferenceError(f"Tests cannot be bind with data in {self.__filepath}. "
+                                 f"Expected tests: {len(self.__tests)} but was {len(delimiter_indexes) - 1}.")
+        return [lines[delimiter_indexes[i] + 1: delimiter_indexes[i + 1]] for i in range(len(delimiter_indexes) - 1)]
+
+    def format_tests(self, tests: list[list[str]]):
+        """
+        Formats input lines as needed test components (case, input).
+
+        :param tests: list of the data for each test.
+        :exception SyntaxError: One input per test.
+        :exception ReferenceError: Mismatch case amount in the file and predefined in the test.
+        """
+        for i, test in enumerate(tests):
+            inputs_amount = len([sw for sw in test if sw.startswith(self.INPUT_TAG)])
+            cases = [sw.strip(self.CASE_TAG) for sw in test if sw.startswith(self.CASE_TAG)]
+            case_amount = len(cases)
+
+            if inputs_amount != 1:
+                raise SyntaxError(f"One test should contain one input row. {inputs_amount}.")
+
+            if len(self.__tests[i].cases) != case_amount:
+                raise ReferenceError(f"Test must contains {len(self.__tests[i].cases)}. Instead {case_amount}")
+
+            self.__tests[i].input_data = eval(test[0].strip(self.INPUT_TAG))
+            for index, case in enumerate(self.__tests[i].cases):
+                case.expected = eval(cases[index])
+
+
+# endregion
 
 # region List task
 
@@ -26,6 +232,16 @@ def is_negative(value: int) -> bool:
     :return: True if value is negative; False - otherwise.
     """
     return value < 0
+
+
+def is_odd(value: int) -> bool:
+    """
+    Defines is value is odd.
+
+    :param value: value to define/
+    :return: True - if value is odd. False - otherwise.
+    """
+    return value % 2 == 1
 
 
 def average(data: list) -> float:
@@ -231,60 +447,25 @@ def find_max_sum_subrectangle(matrix: list[list[int]]) -> list[list[int]]:
     return [[matrix[i][j]
              for j in range(rectangle_size[2], rectangle_size[3] + 1)
              for i in range(rectangle_size[0], rectangle_size[1] + 1)]]
+
+
 # endregion
 
 
-def testing(filepath: str, parser, function, title=""):
-    testing_results = f"{title}:\n"
-    testing_results += "\n" + "=" * 40 + "\n\n"
-    with open(filepath, 'r') as file:
-        test_cases = parser(file.readlines())
-
-    for test_case in test_cases:
-        testing_results += f"\tinputs: {test_case}\n"
-        try:
-            result = function(test_case)
-            testing_results += f"\toutput: {result}\n"
-        except Exception as ex:
-            testing_results += f"\toutput: {ex}\n"
-        testing_results += "\n" + "=" * 40 + "\n\n"
-
-    file_to_save = f"{getcwd()}\\testing_{title.replace(' ', '_')}" + \
-                   f"_{datetime.now().strftime('%Y_%d_%m_%H_%M_%S')}.txt"
-    with open(file_to_save, 'w+') as file:
-        file.write(testing_results)
-
-
-def list_parser(data: list[str]) -> list[list[int]]:
-    return [[int(value) for value in line.split(' ')] for line in data]
-
-
 def main():
-    testing("testCases.txt",
-            list_parser,
-            lambda test_case: filter_and_operate_list(test_case,
-                                                      is_positive,
-                                                      sum),
-            title="Positive sum in the list")
+    tester = \
+        Tester("testCases.txt") \
+        .add_test("List filtering testing") \
+        .add_case(lambda case: filter_and_operate_list(case, operator=len, predicate=is_positive)) \
+        .add_case(lambda case: filter_and_operate_list(case, operator=len, predicate=is_negative)) \
+        .add_case(lambda case: filter_and_operate_list(case, operator=average, predicate=is_negative)) \
+        .add_test() \
+        .add_case(lambda case: filter_and_operate_list(case, operator=sum, predicate=is_odd)) \
+        .add_test() \
+        .add_case(lambda case: find_max_sum_subrectangle(case))
 
-    testing("testCases.txt",
-            list_parser,
-            lambda test_case: filter_and_operate_list(test_case,
-                                                      is_negative,
-                                                      sum),
-            title="Negative sum in the list")
-
-    testing("testCases.txt",
-            list_parser,
-            lambda test_case: filter_and_operate_list(test_case,
-                                                      is_negative,
-                                                      average),
-            title="Negative average in the list")
+    tester.run()
 
 
 if __name__ == '__main__':
-    N = 3
-    m = [[randint(-10, 10) for _ in range(N)] for _ in range(N)]
-    print(to_string(m))
-    print()
-    print(to_string(find_max_sum_subrectangle(m)))
+    main()
