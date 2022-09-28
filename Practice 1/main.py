@@ -9,10 +9,11 @@ from os import getcwd, path
 
 class Case:
     """
-    Represents the smallest pies of the test.
+    Represents the smallest piece of the test.
     """
+
     SUCCESS = "✔"
-    FAIL = "❌ (Expected {0}, but was {1})"
+    FAIL = "❌ (Expected {0}, but was {1})."
     EXCEPTION = "Unhandled exception {0}."
 
     def __init__(self, target):
@@ -49,7 +50,8 @@ class Test:
     def __init__(self, title: str):
         """
         Initiates Test with the title.
-        :param title:
+
+        :param title: title of the test
         """
         self.title = title
         self.input_data = None
@@ -57,7 +59,7 @@ class Test:
 
     def add(self, case: Case):
         """
-        Ads case to the test cases.
+        Adds case to the test cases.
 
         :param case: case to add.
         :return: this test.
@@ -98,6 +100,7 @@ class Tester:
     ...
     ===
     """
+    
     TEST_DELIMITER = "==="
     INPUT_TAG = "Input:"
     CASE_TAG = "Case:"
