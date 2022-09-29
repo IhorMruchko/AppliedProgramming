@@ -210,7 +210,7 @@ class WeatherOperator:
     DEFAULT_FORMAT = "|{0:<12}|{1:^8}|{2:^6}|{3:^8}|{4:^4}|"
 
     @staticmethod
-    def tracker(func):
+    def trace(func):
         """
         Decorator to store save all invocation data and print it.
 
@@ -253,7 +253,7 @@ class WeatherOperator:
                 for city in self.weather
                 for date in self.weather[city] for time in self.weather[city][date]]
 
-    @tracker
+    @trace
     def format_city(self, city: str, city_format: str = None) -> str:
         """
         Returns weather data for the city in the set format.
@@ -272,7 +272,7 @@ class WeatherOperator:
                             for date in self.weather[city]
                             for time in self.weather[city][date]])
 
-    @tracker
+    @trace
     def max_temperature(self) -> str:
         """
         Finds name of the city where the temperature is the highest.
@@ -283,7 +283,7 @@ class WeatherOperator:
         temperatures = self.to_list()
         return max(temperatures, key=lambda temp: temp[self.TEMPERATURE])[self.CITY]
 
-    @tracker
+    @trace
     def min_temperature(self) -> str:
         """
         Finds name of the city where the temperature is the lowest.
@@ -294,11 +294,13 @@ class WeatherOperator:
         temperatures = self.to_list()
         return min(temperatures, key=lambda temp: temp[self.TEMPERATURE])[self.CITY]
 
-    @tracker
+    @trace
     def changes(self, city: str, date: str) -> str:
         """
         Finds all data about temperature changes for the concrete city at the concrete date.
 
+        :param city: city to track changes in.
+        :param date: date to track changes when.
         :returns: all temperature for that date.
         """
 
@@ -307,7 +309,7 @@ class WeatherOperator:
             else ', '.join([str(item[self.TEMPERATURE]) for item in self.to_list()
                             if item[self.CITY] == city and item[self.DATE] == date])
 
-    @tracker
+    @trace
     def domain_wind(self, *cities) -> str:
         """
         Defines the domain wind for all cities.
@@ -323,11 +325,12 @@ class WeatherOperator:
         winds_as_dict = {wind: winds.count(wind) for wind in set(winds)}
         return max(winds_as_dict, key=winds_as_dict.get)
 
-    @tracker
-    def filter_temp(self, predicate) -> str:
+    @trace
+    def filter_temperature(self, predicate) -> str:
         """
         Returns all records in the default format for records, where temperature is valid due to the predicate.
 
+        :param predicate: rule to accept the record based on temperature value.
         :returns: formatted valid records.
         """
 
@@ -370,7 +373,6 @@ def main():
     wo.domain_wind("Сколе")
     wo.domain_wind("Стрий", "Львів", "Золочів")
     wo.filter_temp(lambda temp: temp > 15)
-    wo.save_session()
 
 
 if __name__ == "__main__":
