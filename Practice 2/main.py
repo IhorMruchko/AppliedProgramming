@@ -372,7 +372,9 @@ def main():
     wo.domain_wind("Стрий", "Львів")
     wo.domain_wind("Сколе")
     wo.domain_wind("Стрий", "Львів", "Золочів")
-    wo.filter_temp(lambda temp: temp > 15)
+    wo.filter_temperature(lambda temp: temp > 15)
+
+    wo.save_session()
 
 
 if __name__ == "__main__":
