@@ -81,7 +81,18 @@ class TextWeatherParser(WeatherParser):
     """
 
     class TextLineError:
+        """
+        Information about invalid lines in the text file.
+        """
+
         def __init__(self, position: int, line: list[str]):
+            """
+            Creates instance of the TextLineError.
+
+            :param position: position of the line in the file.
+            :param line: value of the line.
+            """
+
             self.position = position
             self.line = line
 
@@ -89,6 +100,10 @@ class TextWeatherParser(WeatherParser):
             return f"Line \"{' '.join(self.line)}\" at position {self.position} is invalid."
 
     def __init__(self):
+        """
+        Creates TextWeatherParser with all needed format validators.
+        """
+
         self.__date_format = compile(r"(\d{2}[/.]\d{2}[/.]\d{4})|(today)")
         self.__time_format = compile(r"\d{1,2}:\d{2}")
         self.__temperature_format = compile(r"-?\d+")
@@ -178,6 +193,10 @@ class TextWeatherParser(WeatherParser):
 
 
 class WeatherOperator:
+    """
+    Provides access to the weather database based on the dictionary.
+    """
+
     HISTORY = ""
     CITY = 0
     DATE = 1
@@ -192,7 +211,18 @@ class WeatherOperator:
 
     @staticmethod
     def tracker(func):
+        """
+        Decorator to store save all invocation data and print it.
+
+        :param func: function to decorate.
+        """
         def inner(*args):
+            """
+            Invokes function and save needed data about it.
+
+            :params args: argument of the func.
+            """
+
             response = f"Response for: {func.__name__}({','.join([str(arg) for arg in args[1:]])})\n" \
                        + str(func(*args)) \
                        + WeatherOperator.RESPONSE_SEPARATOR
@@ -202,9 +232,21 @@ class WeatherOperator:
         return inner
 
     def __init__(self, weather: dict):
+        """
+        Creates WeatherOperator instance the database dictionary.
+
+        :param weather: weather as dictionary.
+        """
+
         self.weather = weather
 
     def to_list(self):
+        """
+        Converts value from the dictionary to the list.
+
+        :returns: list of tuples of (city, date, time, temperature, pressure, wind).
+        """
+
         return [(city, date, time, self.weather[city][date][time][0],
                  self.weather[city][date][time][1],
                  self.weather[city][date][time][2])
@@ -220,6 +262,7 @@ class WeatherOperator:
         :param city_format: format to display data.
         :returns: information about city in format - if city exists in db. Else - city not found response.
         """
+
         validated_format = city_format if city_format else self.DEFAULT_FORMAT
         return self.CITY_NOT_FOUND.format(city) if city not in self.weather \
             else '\n'.join([str(validated_format.format(date, time,
@@ -230,24 +273,49 @@ class WeatherOperator:
                             for time in self.weather[city][date]])
 
     @tracker
-    def max_temperature(self):
+    def max_temperature(self) -> str:
+        """
+        Finds name of the city where the temperature is the highest.
+
+        :returns: name of the city where were the highest temperature.
+        """
+
         temperatures = self.to_list()
         return max(temperatures, key=lambda temp: temp[self.TEMPERATURE])[self.CITY]
 
     @tracker
-    def min_temperature(self):
+    def min_temperature(self) -> str:
+        """
+        Finds name of the city where the temperature is the lowest.
+
+        :returns: name of the city where were the highest lowest.
+        """
+
         temperatures = self.to_list()
         return min(temperatures, key=lambda temp: temp[self.TEMPERATURE])[self.CITY]
 
     @tracker
-    def changes(self, city: str, date: str):
+    def changes(self, city: str, date: str) -> str:
+        """
+        Finds all data about temperature changes for the concrete city at the concrete date.
+
+        :returns: all temperature for that date.
+        """
+
         return self.CITY_DATE_NOT_FOUND.format(city, date) \
             if city not in self.weather or date not in self.weather[city] \
             else ', '.join([str(item[self.TEMPERATURE]) for item in self.to_list()
                             if item[self.CITY] == city and item[self.DATE] == date])
 
     @tracker
-    def domain_wind(self, *cities):
+    def domain_wind(self, *cities) -> str:
+        """
+        Defines the domain wind for all cities.
+
+        :params: cites: all cities to get wind info from.
+        :returns: value of the wind direction. (One of the symbols: N or NE or E or SE or S or SW or W or NW)
+        """
+
         for city in cities:
             if city not in self.weather:
                 return self.CITY_NOT_FOUND.format(city)
@@ -256,7 +324,13 @@ class WeatherOperator:
         return max(winds_as_dict, key=winds_as_dict.get)
 
     @tracker
-    def filter_temp(self, predicate):
+    def filter_temp(self, predicate) -> str:
+        """
+        Returns all records in the default format for records, where temperature is valid due to the predicate.
+
+        :returns: formatted valid records.
+        """
+
         return '\n'.join([self.DEFAULT_FORMAT.format(item[self.CITY],
                                                      item[self.DATE],
                                                      item[self.TIME],
@@ -267,6 +341,10 @@ class WeatherOperator:
                           predicate(item[self.TEMPERATURE])])
 
     def save_session(self):
+        """
+        Saves all the request's history if it is not empty.
+        """
+
         if not self.HISTORY:
             return
         file_to_save = f"{getcwd()}\\weather_response" + \
@@ -292,6 +370,7 @@ def main():
     wo.domain_wind("Сколе")
     wo.domain_wind("Стрий", "Львів", "Золочів")
     wo.filter_temp(lambda temp: temp > 15)
+    wo.save_session()
 
 
 if __name__ == "__main__":
