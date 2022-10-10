@@ -534,7 +534,7 @@ class TrolleybusTwentyTwo(PublicTransport):
             "Центр зайнятості",
             "Вулиця Княгині Ольги",
             "Вулиця Тролейбусна",
-            "Вулиця Академіка Підстригала",
+            "Вулиця Академіка Підстригача",
             "Вулиця Стрийська-Наукова",
             "Вулиця Скорини",
             "Вулиця Ярослава Гашека",
@@ -1062,6 +1062,8 @@ class RouteManagerWindow(Tk):
     FONT = ("Cascadia Code PL SemiLight", 21)
     BACKGROUND = "white"
 
+    ROUTE_NOT_FOUND = "Маршрут між {0} та {1} зупинками не знайдено."
+
     def __init__(self):
         """
         Initiates window.
@@ -1081,9 +1083,15 @@ class RouteManagerWindow(Tk):
         self.backward_way_listbox = Listbox()
         self.station_listbox = Listbox()
         self.transport_through_station_listbox = Listbox()
+        self.station_from_listbox = Listbox()
+        self.station_to_listbox = Listbox()
         self.transport_through_station_label = Label()
-        self.QUERY_FRAMES = {"Маршрут громадського транспорту": self.pack_stations,
-                             "Які транспортні засоби зупиняються на станції": self.pack_routes}
+        self.route_result_label = Label()
+        self.station_from_value = ""
+        self.station_to_value = ""
+        self.QUERY_FRAMES = {"Маршрут громадського транспорту": self.pack_transport,
+                             "Які транспортні засоби зупиняються на станції": self.pack_stations,
+                             "Знайти маршрут через зупинки": self.pack_routes}
         self.init_query_selection_frame()
 
     @staticmethod
@@ -1110,13 +1118,13 @@ class RouteManagerWindow(Tk):
                                                 justify="center",
                                                 state="readonly")
         self.query_selector_combobox.current(0)
-        self.response_provider_frame = self.pack_stations()
+        self.response_provider_frame = self.pack_transport()
         self.query_selector_combobox.bind("<<ComboboxSelected>>", self.on_combobox_selected)
         self.query_selector_combobox.pack()
         self.request_selector_frame.pack()
         self.response_provider_frame.pack()
 
-    def pack_stations(self) -> Frame:
+    def pack_transport(self) -> Frame:
         """
         Generate frame for query 'Маршрут громадського транспорту'.
 
@@ -1183,7 +1191,7 @@ class RouteManagerWindow(Tk):
 
         return frame
 
-    def pack_routes(self) -> Frame:
+    def pack_stations(self) -> Frame:
         """
         Generate frame for query 'Які транспортні засоби зупиняються на станції'.
 
@@ -1226,6 +1234,48 @@ class RouteManagerWindow(Tk):
         self.transport_through_station_label.pack(expand=True)
         return frame
 
+    def pack_routes(self) -> Frame:
+        """
+        Generate frame for query 'Знайти маршрут через зупинки'.
+
+        :returns: frame to display route from one station to another.
+        """
+        frame = Frame(self,
+                      bg=self.BACKGROUND,
+                      height=self.PARAMETER_FRAME_HEIGHT,
+                      width=self.WIDTH)
+
+        self.station_from_listbox = Listbox(frame,
+                                            listvariable=Variable(value=self.route_manager.all_stations),
+                                            height=15,
+                                            width=self.HALF_WIDTH,
+                                            font=self.FONT,
+                                            bg=self.BACKGROUND,
+                                            justify="center")
+
+        self.station_from_listbox.bind("<<ListboxSelect>>", self.on_station_from_selected)
+        self.station_from_listbox.configure(exportselection=False)
+        self.station_to_listbox = Listbox(frame,
+                                          listvariable=Variable(value=self.route_manager.all_stations),
+                                          width=self.HALF_WIDTH,
+                                          height=15,
+                                          font=self.FONT,
+                                          bg=self.BACKGROUND,
+                                          justify="center")
+
+        self.station_to_listbox.bind("<<ListboxSelect>>", self.on_station_to_selected)
+        self.station_to_listbox.configure(exportselection=False)
+        self.route_result_label = Label(frame,
+                                        font=self.FONT,
+                                        width=self.WIDTH,
+                                        wraplength=self.WIDTH)
+
+        self.route_result_label.pack(side="bottom", expand=True)
+        self.station_to_listbox.pack(side="right")
+        self.station_from_listbox.pack(side="left")
+
+        return frame
+
     def on_combobox_selected(self, _):
         """
         Combobox selected event handler.
@@ -1265,6 +1315,46 @@ class RouteManagerWindow(Tk):
         for transport in transports:
             self.transport_through_station_listbox.insert('end', str(transport))
         self.transport_through_station_label.config(text=self.route_manager.station_connect(station, transports))
+
+    def on_station_to_selected(self, _):
+        """
+        On selected station to event handler.
+        If both station_to and station_from are set - evaluates route.
+        """
+        self.station_to_value = self.get_listbox_item(self.station_to_listbox)
+        if not self.station_to_value:
+            return
+        if not self.station_from_value:
+            return
+
+        self.display_route()
+
+    def on_station_from_selected(self, _):
+        """
+        On selected station from event handler.
+        If both station_to and station_from are set - evaluates route.
+        """
+        self.station_from_value = self.get_listbox_item(self.station_from_listbox)
+        if not self.station_from_value:
+            return
+        if not self.station_to_value:
+            return
+
+        self.display_route()
+
+    def display_route(self):
+        """
+        Displays route information.
+        """
+        found_route = self.route_manager.find_route(self.station_from_value, self.station_to_value)
+        if not found_route:
+            self.route_result_label.configure(text=self.ROUTE_NOT_FOUND.format(self.station_from_value,
+                                                                               self.station_to_value))
+            return
+        if isinstance(found_route, str):
+            self.route_result_label.configure(text=found_route)
+        else:
+            self.route_result_label.configure(text='\n'.join(found_route))
 
     def from_station_to_transport(self, _):
         """
