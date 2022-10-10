@@ -1208,7 +1208,6 @@ class RouteManagerWindow(Tk):
                                        height=20,
                                        font=self.FONT,
                                        bg=self.BACKGROUND,
-                                       justify="center",
                                        selectmode="one")
 
         self.transport_through_station_listbox = Listbox(frame,
@@ -1250,8 +1249,7 @@ class RouteManagerWindow(Tk):
                                             height=15,
                                             width=self.HALF_WIDTH,
                                             font=self.FONT,
-                                            bg=self.BACKGROUND,
-                                            justify="center")
+                                            bg=self.BACKGROUND)
 
         self.station_from_listbox.bind("<<ListboxSelect>>", self.on_station_from_selected)
         self.station_from_listbox.configure(exportselection=False)
@@ -1261,7 +1259,7 @@ class RouteManagerWindow(Tk):
                                           height=15,
                                           font=self.FONT,
                                           bg=self.BACKGROUND,
-                                          justify="center")
+                                          justify="right")
 
         self.station_to_listbox.bind("<<ListboxSelect>>", self.on_station_to_selected)
         self.station_to_listbox.configure(exportselection=False)
