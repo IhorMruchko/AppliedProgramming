@@ -1,4 +1,6 @@
 from abc import ABC
+from tkinter import Tk, Frame, Listbox, Variable, Label
+from tkinter.ttk import Combobox
 
 
 class Alphabet:
@@ -28,8 +30,17 @@ class PublicTransport(ABC):
     TRAM_TRANSPORT_TYPE - tram public transport type.
     TROLLEYBUS_TRANSPORT_TYPE - trolleybus public transport type.
     """
+
     TRAM_TRANSPORT_TYPE = "Трамвай"
     TROLLEYBUS_TRANSPORT_TYPE = "Тролейбус"
+
+    STATION_NOT_FOUND = "Станції {0} нема для {1}"
+    SIT_ON_STATION = "Сідайте на зупинці {0} на {1}. "
+    DIFFERENT_ROUTE_WAY = SIT_ON_STATION + "Доїдьте до кінцевої {2} та на зворотньому шляху вийдіть на {3}"
+    ROUTE_CONNECTION_TEXT = SIT_ON_STATION + "Проїдьте {2} зупин{3} та виходіть на станції {4}"
+    STATION_DIFFERENCE = "Між станціями {0} та {1} є {2} зупин{3}."
+
+    ENDINGS = {tuple([1]): "у", (2, 3, 4): "ки", (0, 5, 6, 7, 8, 9): "ок"}
 
     def __init__(self):
         """
@@ -42,12 +53,21 @@ class PublicTransport(ABC):
         __backward_way_set - set of the stations of the backward way.
         __all_stations - all stations from the forward and backward ways.
         """
+
         self.transport_number = -1
         self.forward_way = []
         self.backward_way = []
         self.__forward_way_set = set()
         self.__backward_way_set = set()
         self.__all_stations = set()
+
+    def __str__(self):
+        """
+        Represents public transport as string.
+
+        :returns: public transport's type and number.
+        """
+        return f'{self.type} №{self.transport_number}'
 
     @property
     def forward_set(self):
@@ -92,7 +112,115 @@ class PublicTransport(ABC):
 
         :returns: TRAM_TRANSPORT_TYPE if instance name contains "Tram". TROLLEYBUS_TRANSPORT_TYPE - otherwise.
         """
-        return self.TRAM_TRANSPORT_TYPE if "Tram" in str(self) else self.TROLLEYBUS_TRANSPORT_TYPE
+        return self.TRAM_TRANSPORT_TYPE if "Tram" in repr(self) else self.TROLLEYBUS_TRANSPORT_TYPE
+
+    @classmethod
+    def define_ending(cls, station_difference: int) -> str:
+        """
+        Convert amount of the stations and ending for the word 'зупин(ок, ки, у)'.
+
+        :param station_difference: amount of the stations between two another stations.
+        :returns: ending of the word 'зупинка'. 'у' - if amount is 1, 'ки' - if amount is 2, 3 or 4, 'ок' otherwise.
+        """
+        return "ок" if 10 <= station_difference <= 20 else [value for key, value in cls.ENDINGS.items()
+                                                            if station_difference % 10 in key][0]
+
+    def common_station_with(self, another) -> list[str]:
+        """
+        Defines common stations between two public transports.
+
+        :param another: another Public transport.
+        :raise ValueError: another type must be PublicTransport.
+        :returns: list of the common stations.
+        """
+        if not isinstance(another, PublicTransport):
+            raise ValueError("Value another must be inherited from the PublicTransport class.")
+        return list(self.forward_set & another.forward_set & self.backward_set & another.backward_set)
+
+    def define_route(self, station_from: str, station_to: str) -> str:
+        """
+        Finds route from one station to another within his own route.
+
+        :param station_from: station to find route from.
+        :param station_to: station to find route to.
+        :returns: STATION_NOT_FOUND - if station_from or station_to is not on his own route.
+                  DIFFERENT_ROUTE_WAY - if station_from and station_to is on the different route-ways.
+                  ROUTE_CONNECTION_TEXT - if station_from and station_to is on the same route-way.
+        """
+        if station_from not in self.all_stations:
+            return self.STATION_NOT_FOUND.format(station_from, str(self))
+        if station_to not in self.all_stations:
+            return self.STATION_NOT_FOUND.format(station_to, str(self))
+
+        if self.is_on_different_ways(station_from, station_to) != self.is_one_way(station_from, station_to):
+            return self.different_route_way(station_from, station_to)
+
+        difference = self.get_station_difference(station_from, station_to)
+        return self.ROUTE_CONNECTION_TEXT.format(station_from, str(self),
+                                                 difference,
+                                                 self.define_ending(difference),
+                                                 station_to)
+
+    def get_station_difference(self, station_from: str, station_to: str) -> int:
+        """
+        Defines how many stations are between station_from and station_to.
+
+        :param station_from: station to find route from.
+        :param station_to: station to find route to.
+        :returns: amount of the stations between station_from and station_to.
+        """
+        transport_direction = self.forward_way if station_from in self.forward_way and station_to in self.forward_way \
+            else self.backward_way
+        return abs(transport_direction.index(station_from) - transport_direction.index(station_to))
+
+    def station_difference(self, station_from: str, station_to: str) -> str:
+        """
+        Format station difference between station_from and station_to.
+
+        :param station_from: station to find route from.
+        :param station_to: station to find route to.
+        :returns: formatted text about amount of station between station_from and station_to.
+        """
+
+        station_difference = self.get_station_difference(station_from, station_to)
+        return self.STATION_DIFFERENCE.format(station_from, station_to, station_difference,
+                                              PublicTransport.define_ending(station_difference))
+
+    def different_route_way(self, station_from: str, station_to: str) -> str:
+        """
+        Defines route for station_from and station_to in case they are on different route-ways.
+
+        :param station_from: station to find route from.
+        :param station_to: station to find route to.
+        :returns: formatted text of the route between station_from and station_to.
+        """
+        return self.DIFFERENT_ROUTE_WAY.format(station_from, str(self), self.forward_way[-1], station_to) \
+            if station_from in self.forward_way and station_to in self.backward_way else \
+            self.DIFFERENT_ROUTE_WAY.format(station_from, str(self), self.backward_way[-1], station_to)
+
+    def is_one_way(self, station_from: str, station_to: str):
+        """
+        Defines if station_from and station_to on the same route_way.
+
+        :param station_from: station to find route from.
+        :param station_to: station to find route to.
+        :returns: True - if station_from and station_to is on the same route_way, false otherwise.
+        """
+
+        return station_from in self.forward_way and station_to in self.forward_way or \
+               station_from in self.backward_way and station_to in self.backward_way
+
+    def is_on_different_ways(self, station_from: str, station_to: str) -> bool:
+        """
+        Defines if station_from or station two is on different route-ways.
+
+        :param station_from: station to find route from.
+        :param station_to: station to find route to.
+        :returns: True - of station_from and station_to is on different route-ways. False - otherwise
+        """
+
+        return station_from in self.forward_way and station_to in self.backward_way or \
+               station_from in self.backward_way and station_to in self.forward_way
 
 
 class TramOne(PublicTransport):
@@ -448,7 +576,7 @@ class TrolleybusTwentyThree(PublicTransport):
             "Вулиця Ярослава Гашека",
             "Вулиця Скорини",
             "Вулиця Стрийська-Наукова",
-            "Бондарівка",
+            "Боднарівка",
             "Вулиця Івана Рубчака",
             "Тролейбусне депо",
             "Вулиця Володимира Великого",
@@ -463,7 +591,7 @@ class TrolleybusTwentyThree(PublicTransport):
             "Лорта",
             "Вулиця Ряшківська"
         ]
-        self.backward_way = reversed(self.forward_way.copy())
+        self.backward_way = list(reversed(self.forward_way.copy()))
 
 
 class TrolleybusTwentyFour(PublicTransport):
@@ -527,7 +655,7 @@ class TrolleybusTwentyFive(PublicTransport):
             "Стрийський ринок",
             "Вулиця Шота Руставелі"
         ]
-        self.backward_way = reversed(self.forward_way.copy())
+        self.backward_way = list(reversed(self.forward_way.copy()))
 
 
 class TrolleybusTwentySeven(PublicTransport):
@@ -546,7 +674,7 @@ class TrolleybusTwentySeven(PublicTransport):
             "Мотозавод",
             "Вулиця Вівсяна",
             "Вулиця Вільхова",
-            "Вулиця Каховська"
+            "Вулиця Каховська",
             "Станція Скнилів"
         ]
         self.backward_way = [
@@ -557,7 +685,7 @@ class TrolleybusTwentySeven(PublicTransport):
             "Вулиця Вівсяна",
             "Мотозавод",
             "Богданівка",
-            "Вулиця Народна"
+            "Вулиця Народна",
             "Вулиця Кульпарківська",
             "ТРЦ \"Скриня\"",
             "Привокзальний Ринок",
@@ -737,7 +865,7 @@ class TrolleybusThirtyEight(PublicTransport):
             "Духовна семінарія",
             "Вулиця Демнянська",
             "Вулиця Стрийська-Наукова",
-            "Бондарівка",
+            "Боднарівка",
             "Вулиця Івана Рубчака",
             "Тролейбусне депо",
             "Вулиця Володимира Великого",
@@ -775,15 +903,16 @@ class TrolleybusThirtyEight(PublicTransport):
         ]
 
 
-class RoutManager:
+class RouteManager:
     """
     Represents manager of the public transport.
     Provides access to the operations on the available public transport.
     """
-    # todo: find transports that has a stop at the station(s).
-    # todo: define amount of stops between stations.
-    # todo: define routs to get to one station from another.
-    # todo check is it possible to get to some station from another.
+
+    STATION_NOT_FOUND = "Станцію {0} в базі не знайдено!"
+    GOES_THROUGH_STATION = "Через станцію {0} проходить {1} транспорт{2}:\n\t{3}"
+
+    ENDINGS = {tuple([1]): "ний засіб", (2, 3, 4): "ні засоби", (5, 6, 7, 8, 9, 0): "их засобів"}
 
     def __init__(self):
         """
@@ -793,6 +922,8 @@ class RoutManager:
         all_stations - list of the all stations, based on public_transport list
                      - unique, sorted in alphabetical order.
         all_transport_numbers - list of all the public transports rout numbers.
+        station_cross - dictionary of the common stations between all public transports.
+        transports - list of the string representations of the public transport list.
         """
         self.public_transport = [
             TramOne(),
@@ -816,11 +947,368 @@ class RoutManager:
         self.all_stations = sorted(list(set.union(*[transport.all_stations for transport in self.public_transport])),
                                    key=Alphabet.as_position_list)
         self.all_transport_numbers = [transport.transport_number for transport in self.public_transport]
+        self.station_cross = [{(self.public_transport[i].transport_number, self.public_transport[j].transport_number):
+                                   self.public_transport[i].common_station_with(self.public_transport[j])}
+                              for i in range(len(self.public_transport)) for j in range(i, len(self.public_transport))
+                              if i != j]
+        self.transports = [str(transport) for transport in self.public_transport]
+
+    @classmethod
+    def same_transport_route(cls, station_from: str, station_to: str, routes: list[PublicTransport]) -> list[str]:
+        """
+        Gather information about route through station that connected with one public transport.
+
+        :param station_from: station to find route from.
+        :param station_to: station to find route to.
+        :param routes: public transport that has route through station_from and station_to.
+        :returns: string formats about routes.
+        """
+        return [route.define_route(station_from, station_to) for route in routes]
+
+    def has_stop_in(self, station: str) -> list[PublicTransport]:
+        """
+        Finds all public transports that has route through the station.
+
+        :param station: station to find routes going through.
+        :returns: list of all public transports.
+        """
+        return [transport for transport in self.public_transport if station in transport.all_stations]
+
+    def has_stops_in(self, *stations: str) -> list[list[PublicTransport]]:
+        """
+        Finds all public transports that goes thought stations.
+
+        :param stations: stations to define is any public transport goes thought.
+        :returns: list of lists of the public transports
+        """
+        return [self.has_stop_in(station) for station in stations]
+
+    def find_route(self, station_from: str, station_to: str) -> str | list[str]:
+        """
+        Finds route from one station to another.
+
+        :param station_from: station to find route from.
+        :param station_to: station to find route to.
+        """
+        transport_at_station_from, transport_at_station_to = map(set, self.has_stops_in(station_from, station_to))
+        if not transport_at_station_from:
+            return self.STATION_NOT_FOUND.format(station_from)
+        if not transport_at_station_to:
+            return self.STATION_NOT_FOUND.format(station_to)
+
+        common_public_transport = list(transport_at_station_from & transport_at_station_to)
+        if common_public_transport:
+            return self.same_transport_route(station_from, station_to, common_public_transport)
+
+    def find_transport(self, transport_name: str) -> PublicTransport | None:
+        """
+        Finds transport info based on str representation of the PublicTransport.
+
+        :param transport_name: name of the transport to find.
+        :returns: PublicTransport - if there is any public transport with str representation as transport_name.
+                  None - otherwise.
+        """
+        return next(filter(lambda transport: str(transport) == transport_name, self.public_transport), None)
+
+    def find_transport_index(self, transport_name: str) -> int:
+        """
+        Finds index of the transport based on transport name.
+        :param transport_name: name of the transport index to find.
+
+        :returns: index of the public transport if it is in list, -1 otherwise.
+        """
+        return self.transports.index(transport_name) if transport_name in self.transports else -1
+
+    def station_connect(self, station: str, transports: list[PublicTransport]) -> str:
+        """
+        Format information about amount of the public transport that goes through station.
+
+        :param station: station to get information about.
+        :param transports: list of transports that has a stop at the station.
+        :returns: formatted information about the station.
+        """
+        return self.GOES_THROUGH_STATION.format(station,
+                                                len(transports),
+                                                self.define_ending(len(transports)),
+                                                '\n\t'.join([str(transport) for transport in transports]))
+
+    @classmethod
+    def define_ending(cls, number: int):
+        """
+        Defines ending of the word 'транспорт'
+
+        :param number: amount of the public transports that has a stop at the station.
+        :returns: string value of the 'транспорт' word ending. "ний засіб" - if number equals 1,
+         "ні засоби" - if number is equal to 2, 3 or 4, "их засобів" - otherwise.
+        """
+        return "ний засіб" if 10 <= number <= 20 else [value for key, value in cls.ENDINGS.items()
+                                                       if number % 10 in key][0]
+
+
+class RouteManagerWindow(Tk):
+    """
+    Interface of the module.
+
+    WIDTH - window width.
+    Height - window height.
+    PARAMETER_FRAME_HEIGHT - height of the frame of the current request.
+    FONT - font style of the app.
+    BACKGROUND - color of the background.
+    """
+    WIDTH = 1280
+    HEIGHT = 815
+    PARAMETER_FRAME_HEIGHT = 900
+    HALF_WIDTH = int(WIDTH * 0.032)
+    FONT = ("Cascadia Code PL SemiLight", 21)
+    BACKGROUND = "white"
+
+    def __init__(self):
+        """
+        Initiates window.
+
+        route_manager - access to the information about the routes.
+        """
+        super(RouteManagerWindow, self).__init__()
+        self.route_manager = RouteManager()
+        self.title("Інформаційний довідник транспортних засобів")
+        self.resizable(height=False, width=False)
+        self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
+        self.request_selector_frame = Frame(self)
+        self.response_provider_frame = Frame(self)
+        self.query_selector_combobox = Combobox()
+        self.transport_listbox = Listbox()
+        self.forward_way_listbox = Listbox()
+        self.backward_way_listbox = Listbox()
+        self.station_listbox = Listbox()
+        self.transport_through_station_listbox = Listbox()
+        self.transport_through_station_label = Label()
+        self.QUERY_FRAMES = {"Маршрут громадського транспорту": self.pack_stations,
+                             "Які транспортні засоби зупиняються на станції": self.pack_routes}
+        self.init_query_selection_frame()
+
+    @staticmethod
+    def get_listbox_item(box: Listbox):
+        """
+        Get information about selected item.
+
+        :param box: Listbox to get information from.
+        :returns: item at the selected index from the listbox.
+        """
+        indexes = box.curselection()
+        return box.get(indexes[0]) if indexes else None
+
+    def init_query_selection_frame(self) -> None:
+        """
+        Sets up combobox of the request selector.
+        """
+        self.request_selector_frame = Frame(self)
+        self.query_selector_combobox = Combobox(self.request_selector_frame,
+                                                values=list(self.QUERY_FRAMES.keys()),
+                                                width=self.WIDTH,
+                                                height=50,
+                                                font=self.FONT,
+                                                justify="center",
+                                                state="readonly")
+        self.query_selector_combobox.current(0)
+        self.response_provider_frame = self.pack_stations()
+        self.query_selector_combobox.bind("<<ComboboxSelected>>", self.on_combobox_selected)
+        self.query_selector_combobox.pack()
+        self.request_selector_frame.pack()
+        self.response_provider_frame.pack()
+
+    def pack_stations(self) -> Frame:
+        """
+        Generate frame for query 'Маршрут громадського транспорту'.
+
+        :returns: frame of the route visualizers: forward and backward ways for concrete public transport.
+        """
+        frame = Frame(self,
+                      bg=self.BACKGROUND,
+                      height=self.PARAMETER_FRAME_HEIGHT,
+                      width=self.WIDTH)
+
+        left_frame = Frame(frame,
+                           bg=self.BACKGROUND,
+                           width=self.HALF_WIDTH)
+        right_frame = Frame(frame,
+                            bg=self.BACKGROUND,
+                            width=self.HALF_WIDTH)
+
+        self.transport_listbox = Listbox(frame,
+                                         listvariable=Variable(value=self.route_manager.transports),
+                                         font=self.FONT,
+                                         bg=self.BACKGROUND,
+                                         width=self.WIDTH,
+                                         justify="center",
+                                         height=7,
+                                         selectmode="one")
+        self.transport_listbox.bind("<<ListboxSelect>>", self.on_transport_selected)
+
+        forward_way_label = Label(left_frame,
+                                  width=self.HALF_WIDTH,
+                                  text="Прямий маршрут",
+                                  bg=self.BACKGROUND,
+                                  font=self.FONT)
+        backward_way_label = Label(right_frame,
+                                   width=self.HALF_WIDTH,
+                                   text="Зворотній маршрут",
+                                   bg=self.BACKGROUND,
+                                   font=self.FONT)
+
+        self.forward_way_listbox = Listbox(left_frame,
+                                           height=20,
+                                           width=self.HALF_WIDTH,
+                                           font=self.FONT,
+                                           bg=self.BACKGROUND,
+                                           justify="center")
+
+        self.forward_way_listbox.bind("<<ListboxSelect>>", self.from_transport_to_station)
+
+        self.backward_way_listbox = Listbox(right_frame,
+                                            width=self.HALF_WIDTH,
+                                            height=20,
+                                            font=self.FONT,
+                                            bg=self.BACKGROUND,
+                                            justify="center")
+
+        self.backward_way_listbox.bind("<<ListboxSelect>>", self.from_transport_to_station)
+
+        self.transport_listbox.pack()
+        left_frame.pack(side="left")
+        right_frame.pack(side="right")
+        forward_way_label.pack()
+        backward_way_label.pack()
+        self.forward_way_listbox.pack()
+        self.backward_way_listbox.pack()
+
+        return frame
+
+    def pack_routes(self) -> Frame:
+        """
+        Generate frame for query 'Які транспортні засоби зупиняються на станції'.
+
+        :returns: frame to display which public transport has a stop at the concrete station.
+        """
+        frame = Frame(self,
+                      bg=self.BACKGROUND,
+                      height=self.PARAMETER_FRAME_HEIGHT,
+                      width=self.WIDTH)
+
+        self.station_listbox = Listbox(frame,
+                                       listvariable=Variable(value=self.route_manager.all_stations),
+                                       width=self.HALF_WIDTH,
+                                       height=20,
+                                       font=self.FONT,
+                                       bg=self.BACKGROUND,
+                                       justify="center",
+                                       selectmode="one")
+
+        self.transport_through_station_listbox = Listbox(frame,
+                                                         width=self.HALF_WIDTH,
+                                                         height=5,
+                                                         font=self.FONT,
+                                                         bg=self.BACKGROUND,
+                                                         justify="center",
+                                                         selectmode="one")
+        self.transport_through_station_listbox.bind("<<ListboxSelect>>", self.from_station_to_transport)
+
+        self.transport_through_station_label = Label(frame,
+                                                     font=self.FONT,
+                                                     height=15,
+                                                     justify="left",
+                                                     wraplength=500,
+                                                     width=self.HALF_WIDTH,
+                                                     bg=self.BACKGROUND)
+
+        self.station_listbox.bind("<<ListboxSelect>>", self.on_station_selected)
+        self.station_listbox.pack(side="left", expand=False)
+        self.transport_through_station_listbox.pack()
+        self.transport_through_station_label.pack(expand=True)
+        return frame
+
+    def on_combobox_selected(self, _):
+        """
+        Combobox selected event handler.
+        Changes frame for current query.
+        """
+        self.response_provider_frame.pack_forget()
+        self.response_provider_frame = self.QUERY_FRAMES[self.query_selector_combobox.get()]()
+        self.response_provider_frame.pack()
+
+    def on_transport_selected(self, _):
+        """
+        Transport selected in the listbox event handler.
+        Update information about forward and backward ways.
+        """
+        route = self.route_manager.find_transport(self.get_listbox_item(self.transport_listbox))
+        if not route:
+            return
+        self.forward_way_listbox.delete(0, 'end')
+        self.backward_way_listbox.delete(0, 'end')
+        for stop in route.forward_way:
+            self.forward_way_listbox.insert("end", stop)
+
+        for stop in route.backward_way:
+            self.backward_way_listbox.insert("end", stop)
+
+    def on_station_selected(self, _):
+        """
+        All stations list box selected event handler.
+        Displays list of the transport has a stop at the selected station and text representation of the query result.
+        """
+        station = self.get_listbox_item(self.station_listbox)
+        transports = self.route_manager.has_stop_in(station)
+        if not transports:
+            return
+
+        self.transport_through_station_listbox.delete(0, 'end')
+        for transport in transports:
+            self.transport_through_station_listbox.insert('end', str(transport))
+        self.transport_through_station_label.config(text=self.route_manager.station_connect(station, transports))
+
+    def from_station_to_transport(self, _):
+        """
+        Transport selected from query result listbox event handler.
+        Changes query frame to 'Маршрут громадського транспорту'
+        and display information about selected item at this list.
+        """
+        transport = self.get_listbox_item(self.transport_through_station_listbox)
+        if not transport:
+            return
+        self.query_selector_combobox.current(0)
+        self.on_combobox_selected(_)
+        self.transport_listbox.select_set(self.route_manager.find_transport_index(transport))
+        self.on_transport_selected(_)
+
+    def from_transport_to_station(self, _):
+        """
+        Stations selected from query result listbox event handler.
+        Changes query frame to 'Які транспортні засоби зупиняються на станції'
+        and display information about selected item at this list.
+        """
+        forward_station = self.get_listbox_item(self.forward_way_listbox)
+        backward_station = self.get_listbox_item(self.backward_way_listbox)
+        if forward_station:
+            return self.change_station(forward_station)
+
+        if backward_station:
+            return self.change_station(backward_station)
+
+    def change_station(self, station: str):
+        """
+        Helping function to find station to display info about.
+
+        :param station: station to find information about.
+        """
+        self.query_selector_combobox.current(1)
+        self.on_combobox_selected(None)
+        self.station_listbox.select_set(self.route_manager.all_stations.index(station))
+        self.on_station_selected(None)
 
 
 def main():
-    manager = RoutManager()
-    print('\n'.join(manager.all_stations))
+    manager = RouteManagerWindow()
+    manager.mainloop()
 
 
 if __name__ == "__main__":
