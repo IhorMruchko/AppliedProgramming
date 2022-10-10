@@ -1,4 +1,5 @@
 from abc import ABC
+from os import getcwd
 from tkinter import Tk, Frame, Listbox, Variable, Label
 from tkinter.ttk import Combobox
 
@@ -911,7 +912,8 @@ class RouteManager:
 
     STATION_NOT_FOUND = "Станцію {0} в базі не знайдено!"
     GOES_THROUGH_STATION = "Через станцію {0} проходить {1} транспорт{2}:\n\t{3}"
-
+    ONE_CROSS_ROUTE = PublicTransport.SIT_ON_STATION + "проїдьте {2} зупин{3} та на зупинці {4} пересядьте на {5} " \
+                                                       "та проїдьте {6} зупин{7} до станції {8}"
     ENDINGS = {tuple([1]): "ний засіб", (2, 3, 4): "ні засоби", (5, 6, 7, 8, 9, 0): "их засобів"}
 
     def __init__(self):
@@ -947,11 +949,26 @@ class RouteManager:
         self.all_stations = sorted(list(set.union(*[transport.all_stations for transport in self.public_transport])),
                                    key=Alphabet.as_position_list)
         self.all_transport_numbers = [transport.transport_number for transport in self.public_transport]
-        self.station_cross = [{(self.public_transport[i].transport_number, self.public_transport[j].transport_number):
-                                   self.public_transport[i].common_station_with(self.public_transport[j])}
-                              for i in range(len(self.public_transport)) for j in range(i, len(self.public_transport))
-                              if i != j]
+        self.station_cross = dict()
         self.transports = [str(transport) for transport in self.public_transport]
+        self.init_station_cross()
+
+    def init_station_cross(self):
+        """
+        Gather information about intersection between all public transport.
+        """
+        for i, transport in enumerate(self.public_transport):
+            for j, another in enumerate(self.public_transport):
+                if i == j:
+                    continue
+                if transport not in self.station_cross:
+                    self.station_cross[transport] = {}
+                common_stations = transport.common_station_with(another)
+                if not common_stations:
+                    continue
+                if another not in self.station_cross[transport]:
+                    self.station_cross[transport][another] = []
+                self.station_cross[transport][another] += common_stations
 
     @classmethod
     def same_transport_route(cls, station_from: str, station_to: str, routes: list[PublicTransport]) -> list[str]:
@@ -990,15 +1007,48 @@ class RouteManager:
         :param station_from: station to find route from.
         :param station_to: station to find route to.
         """
-        transport_at_station_from, transport_at_station_to = map(set, self.has_stops_in(station_from, station_to))
-        if not transport_at_station_from:
+        transports_at_station_from, transports_at_station_to = map(set, self.has_stops_in(station_from, station_to))
+        if not transports_at_station_from:
             return self.STATION_NOT_FOUND.format(station_from)
-        if not transport_at_station_to:
+        if not transports_at_station_to:
             return self.STATION_NOT_FOUND.format(station_to)
 
-        common_public_transport = list(transport_at_station_from & transport_at_station_to)
+        common_public_transport = list(transports_at_station_from & transports_at_station_to)
         if common_public_transport:
             return self.same_transport_route(station_from, station_to, common_public_transport)
+
+        return self.intersected_route(station_from, station_to,
+                                      transports_at_station_from,
+                                      transports_at_station_to)
+
+    def intersected_route(self, station_from: str, station_to: str,
+                          transports_from: set[PublicTransport],
+                          transports_to: set[PublicTransport]) -> str | list[str] | None:
+        """
+        Defines route between stations in case there is change.
+
+        :param station_from: station to find route from.
+        :param station_to: station to find route to.
+        :param transports_to: set of the transports that has a stop at the station_from.
+        :param transports_from: set of the transport that has a stop at the station_to.
+        :returns: formatted info about ways to get from one station to another.
+        """
+        one_cross = [(transport_from, transport_to, self.station_cross[transport_from][transport_to])
+                     for transport_from in transports_from
+                     for transport_to in transports_to
+                     if transport_to in self.station_cross[transport_from]]
+        if not one_cross:
+            return None
+        return [self.ONE_CROSS_ROUTE.format(station_from, str(info[0]),
+                                            info[0].get_station_difference(station_from, info[2][0]),
+                                            info[0].define_ending(info[0].get_station_difference(station_from,
+                                                                                                 info[2][0])),
+                                            info[2][0], str(info[1]),
+                                            info[1].get_station_difference(info[2][0], station_to),
+                                            info[1].define_ending(info[1].get_station_difference(info[2][0],
+                                                                                                 station_to)),
+                                            station_to)
+                for info in one_cross]
 
     def find_transport(self, transport_name: str) -> PublicTransport | None:
         """
@@ -1093,6 +1143,7 @@ class RouteManagerWindow(Tk):
                              "Які транспортні засоби зупиняються на станції": self.pack_stations,
                              "Знайти маршрут через зупинки": self.pack_routes}
         self.init_query_selection_frame()
+        self.bind("s", self.save_stations)
 
     @staticmethod
     def get_listbox_item(box: Listbox):
@@ -1109,7 +1160,7 @@ class RouteManagerWindow(Tk):
         """
         Sets up combobox of the request selector.
         """
-        self.request_selector_frame = Frame(self)
+        self.request_selector_frame = Frame(self, pady=10)
         self.query_selector_combobox = Combobox(self.request_selector_frame,
                                                 values=list(self.QUERY_FRAMES.keys()),
                                                 width=self.WIDTH,
@@ -1123,6 +1174,11 @@ class RouteManagerWindow(Tk):
         self.query_selector_combobox.pack()
         self.request_selector_frame.pack()
         self.response_provider_frame.pack()
+
+    def save_stations(self, _):
+        file_to_save = f"{getcwd()}\\AllStations.txt"
+        with open(file_to_save, 'w+', encoding='utf-8') as file:
+            file.write('\n'.join(self.route_manager.all_stations))
 
     def pack_transport(self) -> Frame:
         """
