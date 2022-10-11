@@ -136,7 +136,7 @@ class PublicTransport(ABC):
         """
         if not isinstance(another, PublicTransport):
             raise ValueError("Value another must be inherited from the PublicTransport class.")
-        return list(self.forward_set & another.forward_set & self.backward_set & another.backward_set)
+        return list(self.all_stations & another.all_stations)
 
     def define_route(self, station_from: str, station_to: str) -> str:
         """
