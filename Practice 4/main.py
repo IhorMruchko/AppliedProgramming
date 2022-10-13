@@ -3,6 +3,10 @@ from unittest import TestCase, main
 
 OPENING_PARENTHESIS = '('
 CLOSING_PARENTHESIS = ')'
+OPERANDS = ['x', 'y', 'z']
+OPERATORS = ['+', '-']
+OPENING_BRACKETS = ['(', '[', '{']
+CLOSING_BRACKETS = [')', ']', '}']
 
 
 class StackOverflowException(BaseException):
@@ -325,41 +329,54 @@ def get_parenthesis(line: str, sort_by: int = -1) -> list[tuple]:
         else list(reversed([result.pop() for _ in range(result.size)]))
 
 
-def get_closing_bracket(opening: chr) -> chr:
+def get_closing_bracket(opening: str) -> str:
+    """
+    Finds proper closing bracket for opening one.
+
+    :param opening: bracket to find closing pair.
+    :returns: proper closing pair or "}" by default.
+    """
     return ')' if opening == '(' else ']' if opening == '[' else '}'
 
 
 def is_valid_formula(line: str) -> bool:
-    operands = ['x', 'y', 'z']
-    operators = ['+', '-']
-    opening_brackets = ['(', '[', '{']
+    """
+    Defines is line is valid formula rule.
+
+    :param line: line to validate as formula
+    :returns: True - if line is satisfying formula requirements. False - otherwise.
+    """
     s1 = Stack(len(line))
     s2 = Stack(len(line))
     is_letter_can_be_next = True
 
     for letter in line.replace(' ', ''):
-        if letter in operands:
+        if letter in OPERANDS:
             s1.push(letter)
             if is_letter_can_be_next:
                 is_letter_can_be_next = False
             else:
                 return False
-        elif letter in operators:
+
+        if letter in OPERATORS:
             is_letter_can_be_next = True
             s2.push(letter)
-        else:
-            if letter in opening_brackets:
-                s2.push(letter)
+
+        if letter in OPENING_BRACKETS:
+            s2.push(letter)
+
+        if letter in CLOSING_BRACKETS:
+            while not s2.is_empty:
+                if letter == get_closing_bracket(s2.pop()):
+                    break
+                if s1.size < 2:
+                    return False
+                s1.pop()
             else:
-                while not s2.is_empty:
-                    if letter == get_closing_bracket(s2.pop()):
-                        break
-                    if s1.size < 2:
-                        return False
-                    s1.pop()
+                return False
 
     while not s2.is_empty:
-        if s2.pop() not in operators or s1.size < 2:
+        if s2.pop() not in OPERATORS or s1.size < 2:
             return False
         s1.pop()
 
