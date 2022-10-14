@@ -1,3 +1,7 @@
+test_compilation
+"D(S(9, S(2, 9)), D(4, S(1, 1)))"
+10
+
 target:     test_get_parenthesis_DefaultOutput
 data:       '...(..(...)....(...).((....(.))..)..)..'
 expected:   [(6, 10), (15, 19), (27, 29), (22, 30), (21, 33), (3, 36)]
@@ -6,7 +10,6 @@ expected:   [(6, 10), (15, 19), (27, 29), (22, 30), (21, 33), (3, 36)]
 target:     test_is_valid_formula
 data:       "x + y - z - ([x + x ] + {[z - z - y] + (y)}) - z"
 expected:   True
-
 
 target:     test_get_parenthesis_SortByOpening
 data:       '(.)...(.(...)....)'
