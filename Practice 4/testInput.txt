@@ -1,6 +1,6 @@
 test_compilation
-"D(S(9, S(2, 9)), D(4, S(1, 1)))"
-10
+"D(5, S( D( S(7, 8), 5), 2))"
+1
 
 target:     test_get_parenthesis_DefaultOutput
 data:       '...(..(...)....(...).((....(.))..)..)..'
