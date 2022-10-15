@@ -1,0 +1,45 @@
+test_compilation
+"D(5, S( D( S(7, 8), 5), 2))"
+1
+
+target:     test_get_parenthesis_DefaultOutput
+data:       '...(..(...)....(...).((....(.))..)..)..'
+expected:   [(6, 10), (15, 19), (27, 29), (22, 30), (21, 33), (3, 36)]
+
+
+target:     test_is_valid_formula
+data:       "x + y - z - ([x + x ] + {[z - z - y] + (y)}) - z"
+expected:   True
+
+target:     test_get_parenthesis_SortByOpening
+data:       '(.)...(.(...)....)'
+expected:   [(0, 2), (6, 17), (8, 12)]
+
+target:     test_get_parenthesis_SortByClosing
+data:       '(.)...(.(...)....)'
+expected:   [(0, 2), (8, 12), (6, 17)]
+
+
+target:     test_stackCreation_CapacityNotInt_TypeError
+data:       ['a', 2.5, -2.5, []]
+expected:   TypeError
+
+target:     test_stackCreation_CapacityLessOrEqualZero_ValueError
+data:       [-5, -10_000, -1, 0]
+expected:   ValueError
+
+target:     test_stackCreation_CapacityGraterThanMaximum_ValueError
+data:       [Stack.CAPACITY_MAXIMUM, Stack.CAPACITY_MAXIMUM + 1, Stack.CAPACITY_MAXIMUM * 2]
+expected:   ValueError
+
+target:     test_stackPush_CapacityLessThanSize_StackOverflowException
+data:       lambda : Stack(1).push('Value').push('error')
+expected:   StackOverflowException
+
+target:     test_stackPop_CapacityLessThanSize_StackOverflowException
+data:       Stack(10).pop
+expected:   StackIsEmptyException
+
+target:     test_stackPeek_CapacityLessThanSize_StackOverflowException
+data:       Stack(5).peek
+expected:   StackIsEmptyException
