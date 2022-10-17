@@ -1,0 +1,51 @@
+brand,number,company,date,city from, destination, carriage_contract, goods
+Mack Titan, OJ5497UW, You be I logistic, 09/07/2023, Ivano-Frankivsk, Bordeaux, 1, Milk, 928.59,Fuel, 7319.62
+Volvo, WO4905KQ, NX Logistics, 25/07/2023, Cortiçadas de Lavre, Venezia, f, Cheese, 5738.71,Baby care, 7459.85,Wine, 8646.50,Salt, 2498.90
+Man, OS1369WX, Mortrans AGC, 21/12/2022, Felixstowe, Vigo, f, Watches, 1549.99,Maple syrup, 6167.86,Honey, 5310.90,Milk, 6580.69
+Camaz, OU1788PO, Mortrans AGC, 23/01/2023, Constanța, Lille, true, Apples, 7046.65
+Daf, DW8685MA, Avtotrans brocker, 07/07/2022, Milano, Utena, 1, Olive oil, 923.67,Honey, 6655.67,Candies, 6926.19,Salt, 7943.58,Milk, 8773.91,Fuel, 4602.93,Honey, 1893.83
+Gaz, OA3257QZ, Avtotrans brocker, 10/07/2023, Nürnberg, Manchester, 1, Watches, 222.54,Watches, 5581.46,Honey, 8348.16,Milk, 6160.68,Wine, 9153.93,Milk, 4734.91,Apples, 6940.93,Watches, 2463.3
+Kenworth, VI3185FM, Avtotrans brocker, 13/01/2022, O Barco, Rotterdam, true, Cheese, 8169.21,Skin care, 4562.17
+Lonestar, WF2084TF, A7 trans, 20/06/2022, Reșița, Albacete, t, Peper, 1206.12,Baby care, 5620.27,Milk, 1276.48,Apples, 5613.20,Watches, 6377.68,Skin care, 8445.98,Candies, 5622.55
+Maz, IW0234EW, NX Logistics, 14/08/2022, Innsbruck, Murcia, true, Cheese, 7305.32,Pasta, 5380.72,Gas, 3398.98,Cherries, 9671.73,Milk, 9063.47,Honey, 1064.45,Olive oil, 7577.74,Pasta, 9152.47,Milk, 274.87,Salt, 6851.11
+Peterbilt, UH3226QW, Almaida group, 11/11/2022, Kassel, Bonifacio, 1, Baby care, 1731.93,Wine, 6254.63,Baby care, 6063.36,Honey, 7057.45,Fuel, 9593.76,Salt, 3393.21,Cookies, 8231.70,Pasta, 1545.32
+Lonestar, UU8837LN, Avtotrans brocker, 11/08/2022, Pitești, Albacete, f, Baby care, 4523.53,Candies, 7932.66,Maple syrup, 8853.38,Skin care, 7872.35,Cheese, 9744.28
+Iveco, KI1539AQ, Partner trade, 25/09/2023, Brest, Zaragoza, f, Cheese, 6447.37,Cookies, 7304.12,Gas, 8561.14,Pasta, 1513.94
+Scania, OC5951SF, Mortrans AGC, 17/08/2022, Ivano-Frankivsk, Erfurt, 1, Olive oil, 2666.92,Wine, 7971.26,Honey, 6612.49,Salt, 2625.23
+Lonestar, GR3252JY, Mortrans AGC, 08/09/2022, La Rochelle, Córdoba, t, Oranges, 6400.28
+Scania, XH5695XK, Avtotrans brocker, 04/03/2022, Travemünde, Liège, t, Watches, 2812.30,Gas, 3453.66,Gas, 9654.56,Watches, 6027.49,Milk, 4060.67,Candies, 6741.7,Pasta, 4415.83
+Western Star, ZW8281UP, Cargo, 02/05/2022, Mangalia, Valmiera, true, Oranges, 4567.79,Peper, 9794.83,Oranges, 9549.35,Cherries, 5679.0,Wine, 8205.96,Apples, 6133.46,Watches, 9065.21,Wine, 4774.37,Baby care, 1708.100
+Ford, VF2463NG, NX Logistics, 17/07/2022, Turku, Almería, 1, Pasta, 4519.69,Baby care, 1754.25,Fuel, 144.66,Cookies, 8669.76,Salt, 2816.2
+Lonestar, NS0668NA, Hegelman transport, 17/01/2022, Liège, Odense, true, Candies, 7094.7,Gas, 6096.94,Peper, 2762.56,Olive oil, 9643.67
+Mack Titan, SN0014LK, Legende Logic, 25/02/2023, Genova, València, f, Gas, 8470.66
+Ford, DA3487NZ, Sevenprort, 04/01/2022, Galați, Mycolaiv, false, Skin care, 2698.44,Cherries, 5323.92,Salt, 9564.36,Honey, 1638.8
+Volvo, WQ1257BU, Avtotrans brocker, 08/11/2022, Messina, Salamanca, 0, Maple syrup, 8017.99,Fuel, 5327.17,Honey, 3308.59,Honey, 3599.28
+Kenworth, BW7715KW, Almaida group, 09/01/2022, Helsinki, Gijón, false, Cherries, 6273.26,Watches, 8855.23,Cookies, 3169.31,Milk, 5464.72,Oranges, 2178.9,Skin care, 5380.56,Cookies, 1808.74,Cherries, 5102.97,Baby care, 5489.85
+Western Star, CU3127HW, NX Logistics, 08/12/2023, Vigo, Malmö, true, Pasta, 6609.11,Salt, 2670.99,Peper, 238.4,Olive oil, 619.64,Pasta, 7144.96,Fuel, 334.77,Peper, 2125.33,Salt, 1757.91,Watches, 7488.34,Gas, 896.37
+Mack Titan, SR0166EU, Legende Logic, 14/02/2023, Craiova, Cortiçadas de Lavre, false, Gas, 9576.56,Wine, 6265.6,Cookies, 646.23,Cherries, 1566.65,Pasta, 5827.18,Oranges, 1662.28
+Man, LN4620QF, Imecs credy, 11/09/2023, Dortmund, Liverpool, 0, Cherries, 4675.99,Pasta, 3172.69,Honey, 8833.33,Apples, 1844.87,Cheese, 9309.86,Wine, 3965.50
+Maz, QZ7840IX, Almaida group, 18/05/2023, Brno, Cluj-Napoca, f, Wine, 9284.5,Cherries, 6306.65,Candies, 5758.15,Watches, 3562.83
+Volvo, KI8309BK, Partner trade, 05/10/2023, Stuttgart, Utena, f, Apples, 8000.21,Skin care, 390.57,Watches, 9830.83,Olive oil, 4811.61,Fuel, 5566.27
+Western Star, MQ0559IR, You be I logistic, 27/11/2023, Malmö, Golfech, 0, Pasta, 6493.96,Fuel, 9532.64,Candies, 4058.21,Candies, 4768.55,Fuel, 54.95,Salt, 5439.89
+Gaz, XC4672VT, Soloviy trans, 11/09/2022, León, Timișoara, f, Baby care, 1132.52,Cheese, 6426.31,Milk, 9652.11,Cheese, 7537.77,Baby care, 4245.53
+Lonestar, ZN6986QA, MIK, 16/05/2022, Linköping, Liverpool, f, Gas, 7945.38,Wine, 5502.61,Gas, 9837.15,Cookies, 6337.25,Peper, 163.96,Fuel, 8935.69,Pasta, 5763.23,Cherries, 6049.7,Maple syrup, 5560.60,Maple syrup, 5731.99
+Daf, ZX9220JV, NX Logistics, 07/10/2023, Kunda, Olsztyn, t, Apples, 6939.55,Maple syrup, 4608.87,Cookies, 5718.82,Maple syrup, 9435.100,Pasta, 5262.93,Pasta, 8575.0,Gas, 5688.16,Cookies, 9676.9,Cherries, 2176.5
+Man, GS0876CW, Soloviy trans, 18/04/2023, Catania, Edirne, t, Cheese, 2062.35,Cherries, 4245.48,Apples, 9174.31,Oranges, 4149.27,Cookies, 433.12,Gas, 135.38,Wine, 7597.45
+Iveco, VN5008PQ, MIK, 27/08/2023, Duisburg, Travemünde, f, Salt, 2257.95,Milk, 3810.86,Pasta, 7672.86,Candies, 5943.11,Apples, 8677.79
+Kraz, FV8728HY, VIVA+, 11/05/2022, Catania, Navia, false, Cheese, 8042.88
+Camaz, CA4514EE, Cargo, 03/10/2022, Lleida, Mycolaiv, false, Fuel, 8835.6,Skin care, 8746.24,Cherries, 1951.57,Oranges, 5859.46,Cookies, 5772.14
+Daf, ZU4452RT, Almaida group, 07/02/2023, Västerås, Banská Bystrica, 0, Olive oil, 5130.62,Cheese, 8665.62,Fuel, 9503.58,Candies, 5356.18,Baby care, 5267.95,Maple syrup, 5184.11,Milk, 7911.63,Olive oil, 1478.22,Wine, 452.22
+Ford, XL7423LM, A7 trans, 03/03/2022, Toulouse, Saint-Laurent, t, Honey, 8428.39,Cookies, 2633.69,Oranges, 6427.57,Maple syrup, 2738.10,Candies, 8936.62,Cherries, 6538.75
+Scania, PN0329OC, MIK, 17/12/2022, Ajaccio, Łódź, false, Apples, 5965.83,Wine, 2317.36,Cheese, 8388.64,Salt, 2444.46
+Gaz, OS0863LL, MIK, 19/01/2022, Paris, München, true, Maple syrup, 4546.70,Cheese, 9311.87,Cherries, 1467.80,Cherries, 9968.12,Honey, 4776.49
+Western Star, WG6116IP, Cargo, 15/10/2022, Uppsala, Cortiçadas de Lavre, 0, Skin care, 7773.10,Skin care, 9637.89,Candies, 5935.47,Baby care, 262.64,Wine, 6153.5,Candies, 3295.44,Salt, 2724.31,Wine, 1759.22
+Daf, ZB7982MW, Avtotrans brocker, 26/09/2022, Nürnberg, Banská Bystrica, true, Olive oil, 3978.85,Salt, 8689.55,Pasta, 3337.93,Wine, 387.70
+Maz, DE5675RJ, Hegelman transport, 24/01/2023, Kalmar, Lille, t, Fuel, 5095.22
+Lonestar, MT0496KR, Partner trade, 10/03/2022, Aalborg, Łódź, 1, Wine, 3145.23,Peper, 452.71,Gas, 738.71,Pasta, 4479.7,Cherries, 4966.66
+Kraz, SF0549CS, You be I logistic, 18/02/2022, Parma, Rotterdam, true, Olive oil, 3890.96,Salt, 9291.34,Skin care, 6203.84,Candies, 1172.35,Baby care, 2956.85
+Lonestar, XN3638FP, A7 trans, 06/05/2022, Kalmar, Felixstowe, 0, Peper, 1025.72,Wine, 2523.39,Apples, 5263.93,Candies, 3648.15,Olive oil, 7408.27,Apples, 277.17
+Kenworth, SL1575RI, Cargo, 12/12/2023, Wien, Narva, t, Peper, 7387.27,Salt, 8828.92,Maple syrup, 9488.71,Honey, 2158.48
+Man, CU5139RZ, VIVA+, 17/11/2022, Göteborg, Kapellskär, 0, Fuel, 6525.36,Milk, 8457.70,Peper, 3570.50,Peper, 93.29,Salt, 5885.39,Salt, 1494.37
+Daf, WP1057ED, Legende Logic, 19/01/2023, Tekirdağ, Rotterdam, true, Cherries, 3884.73,Olive oil, 5264.5,Oranges, 3388.50
+Ford, QI0502CP, Cargo, 07/06/2023, Palermo, Bari, f, Candies, 1961.79,Wine, 6504.68,Baby care, 5683.77,Salt, 2502.49,Cookies, 5339.34,Gas, 9261.66
+Scania, DC5911AE, MIK, 15/08/2022, Vinnicia, Klagenfurt am Wörthersee, 1, Olive oil, 170.49,Pasta, 6032.56,Skin care, 7258.23,Pasta, 499.1,Apples, 4749.64,Candies, 8283.48,Oranges, 3609.64,Gas, 4238.58,Apples, 4283.86,Baby care, 2576.78
