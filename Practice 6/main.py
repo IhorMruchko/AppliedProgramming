@@ -10,7 +10,7 @@ class FileType(Enum):
     Image = ('.jpeg', '.png', '.gif')
     Programs = ('.py', '.dll', '.exe')
     Transfers = ('.json', '.xml')
-    Common = ('.txt', '.txt')
+    Text = ('.txt', '.txt')
     Folders = ('', '')
 
 
@@ -62,10 +62,16 @@ class FileManager:
 
     @staticmethod
     def get_file_type(file_types: tuple[str] | str | FileType) -> str:
+        """
+        Gets proper string representation for the type.
+
+        :raises TypeError: file types must be only string-tuple, string or FileType enum.
+        :returns: formatted string of the type(s) to find.
+        """
         if isinstance(file_types, tuple):
-            return ','.join(file_types)
+            return ','.join(set(file_types))
         if isinstance(file_types, FileType):
-            return ','.join(file_types.value)
+            return ','.join(set(file_types.value))
         if isinstance(file_types, str):
             return file_types
 
@@ -110,9 +116,34 @@ class FileManager:
 
     @staticmethod
     def find_by_type(file_types: tuple[str] | str | FileType, *file_path: str) -> dict:
+        """
+        Forms dictionary of the directory and file names that match the type.
+
+        :param file_types: type of the file to filter by.
+        :param file_path: paths where files are located.
+        :returns: dictionary of the directory and the file of the type.
+        """
         return {directory: [file_name for file_name in os.listdir(directory)
                             if FileManager.is_type_matches(file_types, os.path.splitext(file_name)[1])]
                 for directory in file_path}
+
+    @staticmethod
+    def group_by_type(file_path: str) -> dict:
+        """
+        Groups elements in the selected folder by the file type.
+
+        :param file_path: folder from where files are grouped.
+        :returns: dictionary, where format of the file is the key and value is an absolute path to the file.
+        """
+        files = os.listdir(file_path)
+        result = {}
+        for file_name in files:
+            _, file_type = os.path.splitext(file_name)
+            if file_type not in result:
+                result[file_type] = []
+            result[file_type].append(os.path.join(file_path, file_name))
+        return result
+
 
 class TaskSolver:
     """
@@ -158,7 +189,14 @@ class TaskSolver:
                          if len(parsed_data[name][size]) > 1)
 
     @staticmethod
-    def find_by_type(file_types: tuple[str] | str | FileType, *file_path: str):
+    def find_by_type(file_types: tuple | str | FileType, *file_path: str):
+        """
+        Gets information about files of the specified type.
+
+        :param file_types: types of the file should filter. May be string-tuple, string or FileType enum.
+        :param file_path: all file paths to search in.
+        :returns: formatted information about type to found and full path to the files that matches this type.
+        """
         dictionary = FileManager.find_by_type(file_types, *file_path)
         return '\n'.join(TaskSolver.THIRD_TASK_RESPONSE_FORMAT.format(FileManager.get_file_type(file_types),
                                                                       directory,
@@ -166,22 +204,28 @@ class TaskSolver:
                          for directory in dictionary
                          if len(dictionary[directory]) > 0)
 
+    @staticmethod
+    def sort_by_type(*file_path: str):
+        """
+        Sorts file for all directories.
+
+        :param file_path: list of the directories to sort files by type.
+        """
+        for path in file_path:
+            group = FileManager.group_by_type(path)
+            for key, value in group.items():
+                if key == '':
+                    continue
+                folder = os.path.join(path, key[1:].upper())
+                os.mkdir(folder)
+                for file in value:
+                    os.replace(file, os.path.join(folder, os.path.split(file)[1]))
+
 
 def main():
-    print(TaskSolver.find_by_type(FileType.Image,
-                                   r'D:\Studying\4 grade\Information security\Практичні',
-                                   r'D:\Studying\4 grade\Ukrainian language',
-                                   r'C:\Users\Lenovo\Documents',
-                                   r'E:\OperaDownload'))
-    print(TaskSolver.find_duplicated_file(r'E:\Programming\Python\AppliedProgramming\Practice 1',
-                                          r'E:\Programming\Python\AppliedProgramming\Practice 2',
-                                          r'E:\Programming\Python\AppliedProgramming\Practice 3',
-                                          r'E:\Programming\Python\AppliedProgramming\Practice 4',
-                                          r'E:\Programming\Python\AppliedProgramming\Practice 5',
-                                          r'E:\Programming\Python\AppliedProgramming\Practice 6'))
-
-    print(TaskSolver.find_duplicated_file(r'E:\Programming\Prolog\Practice',
-                                          r'E:\Programming\Prolog\Practice\Homework'))
+    print(TaskSolver.sort_by_type(r'E:\Programming\Prolog\Practice\Homework',
+                                  r'E:\Programming',
+                                  r'C:\Users\Lenovo\Documents'))
 
 
 if __name__ == '__main__':
