@@ -1,11 +1,9 @@
+import ctypes.wintypes
 import json
 import os
 import sys
 from json import JSONDecodeError
 from os import path
-from sys import argv, orig_argv
-import ctypes.wintypes
-from time import sleep
 
 
 class PathManager:
@@ -42,6 +40,7 @@ class FileEditor:
     FILE_IS_NOT_EXISTS = 'File can not be located with path [{0}].'
     FILE_REMOVED = 'File [{0}] was removed from {1}.'
     FILE_NOT_IN_LIST = 'File [{0}] is not in {1}.'
+    CONNECTOR = '\n\t'
 
     def __init__(self):
         self.files_to_open: dict = PathManager.load_object(self.FILES_TO_EDIT_FILE_NAME, {})
@@ -49,7 +48,6 @@ class FileEditor:
     def add(self, name: str, value: str = None) -> str:
         key = name.lower()
         if key not in self.files_to_open:
-            print(self.files_to_open)
             self.files_to_open[key] = []
 
         if value is None:
@@ -77,24 +75,32 @@ class FileEditor:
 
     def remove(self, name: str, rem: str | int | None) -> str:
         key = name.lower()
-        if key not in self.files_to_open[key]:
+        if key not in self.files_to_open:
             return self.SCENARIO_NOT_FOUND.format(key)
 
         if rem is None:
             self.files_to_open.pop(key)
+            PathManager.save_object(self.FILES_TO_EDIT_FILE_NAME, self.files_to_open)
             return self.SCENARIO_REMOVED.format(key)
+
+        if all(str.isnumeric(item) for item in rem) and len(self.files_to_open[key]) > 0:
+            removed = self.files_to_open[key][(abs(int(rem)) - 1) % len(self.files_to_open[key])]
+            self.files_to_open[key].remove(removed)
+            PathManager.save_object(self.FILES_TO_EDIT_FILE_NAME, self.files_to_open)
+            return self.FILE_REMOVED.format(removed, key)
 
         if isinstance(rem, str) and rem in self.files_to_open[key]:
             self.files_to_open[key].remove(rem)
             PathManager.save_object(self.FILES_TO_EDIT_FILE_NAME, self.files_to_open)
             return self.FILE_REMOVED.format(rem, key)
 
-        if isinstance(rem, int):
-            removed = self.files_to_open[key][rem % len(self.files_to_open[key])]
-            self.files_to_open[key].remove(removed)
-            return self.FILE_REMOVED.format(removed, key)
-
         return self.FILE_NOT_IN_LIST.format(rem, key)
+
+    def show(self, name: str | None) -> str:
+        return '\n'.join(f'{key}:\n\t{self.CONNECTOR.join(value)}' for key, value in self.files_to_open.items()) \
+            if name is None else f'{name}:\n\t{self.CONNECTOR.join(self.files_to_open[name.lower()])}' \
+            if name.lower() in self.files_to_open \
+            else self.SCENARIO_NOT_FOUND.format(name)
 
 
 class ScenarioRunner:
@@ -106,11 +112,11 @@ class ScenarioRunner:
 
     @staticmethod
     def execute(*args: str) -> str:
-        print(*args)
         if len(args) == 0:
             return 'Something went wrong \\_^^_/'
         if args[0] == 'file':
             return ScenarioRunner.run_file(*args[1:])
+        return 'Something went wrong \\_^^_/'
 
     @staticmethod
     def run_file(*args: str) -> str:
@@ -123,12 +129,16 @@ class ScenarioRunner:
             return file_runner.remove(args[1], args[2] if len(args) == 3 else None)
         if args[0] == 'run' and len(args) == 2:
             return file_runner.run(args[1])
+        if args[0] == 'show' and 1 <= len(args) <= 2:
+            return file_runner.show(args[1] if len(args) == 2 else None)
 
         return 'Command not found.'
 
 
 def main():
-    print(ScenarioRunner.execute(*sys.argv))
+    mode = 'release'
+    arguments = input('>>>').split() if mode == 'debug' else sys.argv[1:]
+    print(ScenarioRunner.execute(*arguments))
 
 
 if __name__ == '__main__':
