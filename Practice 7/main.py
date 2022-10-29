@@ -87,6 +87,7 @@ class FileEditor:
                 response += self.RUN_IS_FAILED.format(e, editable)
             else:
                 response += self.RUN_IS_SUCCESS.format(editable)
+        return response
 
     def remove(self, name: str, rem: str | int | None) -> str:
         key = name.lower()
@@ -152,7 +153,7 @@ class ScenarioRunner:
 
 
 def main():
-    mode = Mode.RELEASE
+    mode = Mode.DEBUG
     arguments = input('>>>').split() if mode == Mode.DEBUG else sys.argv[1:]
     print(ScenarioRunner.execute(*arguments))
 
