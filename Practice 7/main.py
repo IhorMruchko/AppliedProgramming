@@ -2,8 +2,14 @@ import ctypes.wintypes
 import json
 import os
 import sys
+from enum import Enum
 from json import JSONDecodeError
 from os import path
+
+
+class Mode(Enum):
+    DEBUG = 'debug'
+    RELEASE = 'release'
 
 
 class PathManager:
@@ -40,6 +46,9 @@ class FileEditor:
     FILE_IS_NOT_EXISTS = 'File can not be located with path [{0}].'
     FILE_REMOVED = 'File [{0}] was removed from {1}.'
     FILE_NOT_IN_LIST = 'File [{0}] is not in {1}.'
+    RUN_IS_FAILED = 'Exception ({0}) was thrown while running [{1}].'
+    RUN_IS_SUCCESS = '[{0}] was run.'
+
     CONNECTOR = '\n\t'
 
     def __init__(self):
@@ -67,11 +76,17 @@ class FileEditor:
 
     def run(self, name: str) -> str:
         key = name.lower()
+        response = ""
         if key not in self.files_to_open:
             return self.SCENARIO_NOT_FOUND.format(key)
 
         for editable in self.files_to_open[key]:
-            os.startfile(editable)
+            try:
+                os.startfile(editable)
+            except Exception as e:
+                response += self.RUN_IS_FAILED.format(e, editable)
+            else:
+                response += self.RUN_IS_SUCCESS.format(editable)
 
     def remove(self, name: str, rem: str | int | None) -> str:
         key = name.lower()
@@ -107,7 +122,8 @@ class ScenarioRunner:
     """
     file add (name) [source]
     file remove (name) [source]
-    file run (name)
+    file open (name)
+    file list [name]
     """
 
     @staticmethod
@@ -127,17 +143,17 @@ class ScenarioRunner:
             return file_runner.add(args[1], args[2] if len(args) == 3 else None)
         if args[0] == 'remove' and 2 <= len(args) <= 3:
             return file_runner.remove(args[1], args[2] if len(args) == 3 else None)
-        if args[0] == 'run' and len(args) == 2:
+        if args[0] == 'open' and len(args) == 2:
             return file_runner.run(args[1])
-        if args[0] == 'show' and 1 <= len(args) <= 2:
+        if args[0] == 'list' and 1 <= len(args) <= 2:
             return file_runner.show(args[1] if len(args) == 2 else None)
 
         return 'Command not found.'
 
 
 def main():
-    mode = 'release'
-    arguments = input('>>>').split() if mode == 'debug' else sys.argv[1:]
+    mode = Mode.RELEASE
+    arguments = input('>>>').split() if mode == Mode.DEBUG else sys.argv[1:]
     print(ScenarioRunner.execute(*arguments))
 
 
