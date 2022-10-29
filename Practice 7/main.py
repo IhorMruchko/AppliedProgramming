@@ -45,8 +45,8 @@ class FileEditor:
     VALUE_ALREADY_IN_LIST = 'Value [{0}] is already in scenario {1}.'
     FILE_IS_NOT_EXISTS = 'File can not be located with path [{0}].'
     FILE_REMOVED = 'File [{0}] was removed from {1}.'
-    FILE_NOT_IN_LIST = 'File [{0}] is not in {1}.'
-    RUN_IS_FAILED = 'Exception ({0}) was thrown while running [{1}].'
+    FILE_NOT_IN_LIST = 'File [{0}] is not in {1}.\n'
+    RUN_IS_FAILED = 'Exception ({0}) was thrown while running [{1}].\n'
     RUN_IS_SUCCESS = '[{0}] was run.'
 
     CONNECTOR = '\n\t'
@@ -84,9 +84,9 @@ class FileEditor:
             try:
                 os.startfile(editable)
             except Exception as e:
-                response += self.RUN_IS_FAILED.format(e, editable)
+                response += self.RUN_IS_FAILED.format(e, editable) + '\n'
             else:
-                response += self.RUN_IS_SUCCESS.format(editable)
+                response += self.RUN_IS_SUCCESS.format(editable) + '\n'
         return response
 
     def remove(self, name: str, rem: str | int | None) -> str:
@@ -153,7 +153,7 @@ class ScenarioRunner:
 
 
 def main():
-    mode = Mode.RELEASE
+    mode = Mode.DEBUG
     arguments = input('>>>').split() if mode == Mode.DEBUG else sys.argv[1:]
     print(ScenarioRunner.execute(*arguments))
 
