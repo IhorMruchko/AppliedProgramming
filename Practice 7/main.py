@@ -153,7 +153,7 @@ class ScenarioRunner:
 
 
 def main():
-    mode = Mode.DEBUG
+    mode = Mode.RELEASE
     arguments = input('>>>').split() if mode == Mode.DEBUG else sys.argv[1:]
     print(ScenarioRunner.execute(*arguments))
 
