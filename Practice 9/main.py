@@ -51,6 +51,7 @@ class JSONWorker(ABC):
             Invokes function and save needed data about it.
 
             :params args: argument of the func.
+            :param kwargs: optional arguments of the func.
             """
 
             result = func(*args, **kwargs)
@@ -66,13 +67,22 @@ class JSONWorker(ABC):
 
     @abstractmethod
     def source(self):
+        """
+        Gets directory of the source file of the JSON worker.
+        """
         pass
 
     @abstractmethod
     def data(self):
+        """
+        Gets formatted data based on structure.
+        """
         pass
 
     def load(self):
+        """
+        Loads data to the program's memory.
+        """
         with open(self.source(), "r") as json_source:
             self.json_data = eval(json.load(json_source))
 
@@ -89,6 +99,9 @@ class JSONWorker(ABC):
 
 
 class CryptoJsonWorker(JSONWorker):
+    """
+    Provides access to the binance file.
+    """
     ROOT = 'markets'
     SUB_ROOT = 'quote'
     EXCHANGE_ID = 'exchange_id'
@@ -110,28 +123,56 @@ class CryptoJsonWorker(JSONWorker):
     def data(self) -> list[dict]:
         return self.json_data[self.ROOT]
 
-    @JSONWorker.trace
-    def get_quote(self, name: str) -> dict:
-        return next(filter(lambda quote: quote[self.SYMBOL] == name, self.data), None)
-
-    @JSONWorker.trace
-    def get_sum(self, quote: dict):
-        return sum(item[self.PRICE] for item in quote[CryptoJsonWorker.SUB_ROOT].values())
-
-    @JSONWorker.trace
-    def get_total_volume(self, quote: dict):
-        if not quote:
-            raise ValueError('Quote is None')
-        return sum(item[self.VOLUME_PER_DAY] for item in quote[CryptoJsonWorker.SUB_ROOT].values())
-
     def source(self):
         return f'{getcwd()}/crypto.json'
 
     @JSONWorker.trace
-    def order_by(self, key: str, descending=False):
+    def get_quote(self, name: str) -> dict:
+        """
+        Gets value of the quote.
+
+        :param name: name of the quote.
+        :returns: dict with quote's info or None.
+        """
+        return next(filter(lambda quote: quote[self.SYMBOL] == name, self.data), None)
+
+    @JSONWorker.trace
+    def get_sum(self, quote: dict) -> float:
+        """
+        Evaluates sum of quote's data.
+        :param quote: quote to get sum from.
+        :returns: sum of the crypto-money of the quote.
+        """
+        return sum(item[self.PRICE] for item in quote[CryptoJsonWorker.SUB_ROOT].values())
+
+    @JSONWorker.trace
+    def get_total_volume(self, quote: dict) -> float:
+        """
+         Evaluates total volume of quote's data.
+        :param quote: quote to get sum from.
+        :returns: total amount of the volume of the crypto-money of the quote.
+        """
+        if not quote:
+            raise ValueError('Quote is None')
+        return sum(item[self.VOLUME_PER_DAY] for item in quote[CryptoJsonWorker.SUB_ROOT].values())
+
+    @JSONWorker.trace
+    def order_by(self, key: str, descending=False) -> list[dict]:
+        """
+        Sort quotes by quotes field.
+        :param key: key to sort by.
+        :param descending: is descending sorting order.
+        :returns: sorted by key list on ascending or descending order.
+        """
         return sorted(self.data, key=lambda quote: quote[key], reverse=descending)
 
     def display_quote(self, quote: dict, *keys: str):
+        """
+        Gets string representation of the quotes by keys. Make projection on the quote.
+        :param quote: quote to display.
+        :param keys: keys to display from quote.
+        :raise ValueError: At least one key must be provided.
+        """
         if not keys:
             raise ValueError('Provide at least one key to display')
 
@@ -140,6 +181,11 @@ class CryptoJsonWorker(JSONWorker):
 
     @JSONWorker.trace
     def display_list(self, quotes: list[dict], *keys: str):
+        """
+        Displays list of quotes.
+        :param quotes: list of quotes to display.
+        :param keys: keys to display from quote.
+        """
         return ''.join([self.QUOTES_DISPLAY.format(self.display_quote(quote, *keys)) for quote in quotes])
 
 
