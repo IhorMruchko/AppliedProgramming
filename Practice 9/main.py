@@ -26,7 +26,7 @@ class JsonFileScrapper:
 
     def get_file_path(self):
         return f"{getcwd()}\\loaded_json" + \
-                f"_{datetime.now().strftime('%Y_%d_%m_%H_%M_%S')}{self.JSON_FORMAT}"
+               f"_{datetime.now().strftime('%Y_%d_%m_%H_%M_%S')}{self.JSON_FORMAT}"
 
 
 class JSONWorker(ABC):
@@ -55,8 +55,10 @@ class JSONWorker(ABC):
             """
 
             result = func(*args, **kwargs)
-            response = f"Response for: {func.__name__}({','.join([str(arg) for arg in args[1:]])}, " \
-                       f"{','.join([JSONWorker.KEY_VALUE.format(key, value) for key, value in kwargs.items()])})\n" \
+            kwargs_response = f", {','.join([JSONWorker.KEY_VALUE.format(key, value) for key, value in kwargs.items()])}" \
+                if kwargs else ""
+            response = f"Response for: {func.__name__}({','.join([str(arg) for arg in args[1:]])}" \
+                       f"{kwargs_response})\n" \
                        + str(result) \
                        + JSONWorker.SEPARATOR
             print(response)
@@ -117,7 +119,7 @@ class CryptoJsonWorker(JSONWorker):
     CREATED = 'created_at'
     UPDATED = 'updated_at'
     KEY_VALUE_DISPLAY = '\t{0} : {1}\n'
-    QUOTES_DISPLAY = '\n{0}\n' + JSONWorker.SEPARATOR
+    QUOTES_DISPLAY = '\n{0}\n' + '-' * 50
 
     @property
     def data(self) -> list[dict]:
@@ -177,7 +179,7 @@ class CryptoJsonWorker(JSONWorker):
             raise ValueError('Provide at least one key to display')
 
         return ''.join([self.KEY_VALUE_DISPLAY.format(key, value)
-                          for value, key in zip([quote[key] for key in keys if key in quote.keys()], keys)])
+                        for value, key in zip([quote[key] for key in keys if key in quote.keys()], keys)])
 
     @JSONWorker.trace
     def display_list(self, quotes: list[dict], *keys: str):
@@ -190,14 +192,64 @@ class CryptoJsonWorker(JSONWorker):
 
 
 class PhotoJsonWorker(JSONWorker):
-    def get(self, key: str):
-        pass
+    """
+    Provides access to the photo file.
+    """
+    ALBUM_ID = 'albumId'
+    SONG_ID = 'id'
+    ALBUM_FORMAT = "AlbumId = {0}:\n{1}"
+    SONG_FORMAT = "\ttitle = {0}\n\turl = {1}\n\tthumbnailUrl = {2}\n" + '-' * 50
+    SONG_NOT_FOUND = 'There is no song with id {0} in album {1}.'
+    TITLE = 'title'
+    URL = 'url'
+    THUMBNAIL_URL = 'thumbnailUrl'
 
     def data(self):
-        pass
+        return self.json_data
 
     def source(self):
         return f'{getcwd()}/photos.json'
+
+    @JSONWorker.trace
+    def get_albums_info(self, album_id: int) -> str:
+        """
+        Gets all song from the album, found by id.
+        :param album_id: id of the album.
+        :returns: string representation of the album.
+        """
+        return self.ALBUM_FORMAT.format(album_id, ''.join(self.SONG_FORMAT.format(song[self.TITLE],
+                                                                                  song[self.URL],
+                                                                                  song[self.THUMBNAIL_URL])
+                                                          for song in self.get_albums(album_id)))
+
+    def get_albums(self, album_id: int) -> list[dict]:
+        """
+        Gets all albums by id.
+        :param album_id: id of the album.
+        :returns: list of albums with specified id.
+        """
+        return [album for album in self.json_data if album[self.ALBUM_ID] == album_id]
+
+    def get_song(self, album_id: int, song_id: int):
+        """
+        Gets song from the album by id.
+        :param album_id: id of the album.
+        :param song_id: id of the song.
+        :returns: song from the specified album.
+        """
+        return next(filter(lambda song: song[self.SONG_ID] == song_id, self.get_albums(album_id)), None)
+
+    @JSONWorker.trace
+    def get_song_info(self, album_id: int, song_id: int):
+        """
+        Gets information about the song.
+        :param album_id: id of the album.
+        :param song_id: id of the song.
+        :returns: string representation of the song.
+        """
+        song = self.get_song(album_id, song_id)
+        return self.SONG_FORMAT.format(song[self.TITLE], song[self.URL], song[self.THUMBNAIL_URL]) \
+            if song else self.SONG_NOT_FOUND.format(song_id, album_id)
 
 
 def scrap():
@@ -219,7 +271,11 @@ def main():
     crypto_worker.display_list(crypto_worker.order_by(crypto_worker.CREATED, descending=True),
                                crypto_worker.SYMBOL, crypto_worker.CREATED)
     crypto_worker.get_total_volume(crypto_worker.get_quote('USDT-USD'))
-    crypto_worker.save()
+
+    photo_worker = PhotoJsonWorker()
+    photo_worker.get_albums_info(1)
+    photo_worker.get_song_info(1, 10)
+    photo_worker.save()
 
 
 if __name__ == "__main__":
